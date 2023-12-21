@@ -1,0 +1,13 @@
+{
+  "path-autocomplete.pathMappings": {
+    "@": "${folder}/src",
+    "~@": "${folder}/src"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "volar.takeOverMode.extension": "Vue.volar",
+  "typescript.tsserver.pluginPaths": ["typescript-plugin-css-modules"],
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "stylelint.enable": true
+}

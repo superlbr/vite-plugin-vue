@@ -1,0 +1,250 @@
+import * as path from 'path';
+import { splitVendorChunkPlugin, Plugin, loadEnv } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import basicSsl from '@vitejs/plugin-basic-ssl';
+import vueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
+import circularDependency from 'vite-plugin-circullar-dependency';
+import legacy from 'vite-plugin-legacy-extends';
+import svgLoader from 'vite-svg-loader';
+import { createClassNamehash } from './utils/createClassNameHash';
+
+type Targets =
+  | string
+  | string[]
+  | {
+      [key: string]: string;
+    };
+
+// build targets
+const esTargets = ['es2015', 'chrome87', 'safari13', 'firefox78', 'edge88'];
+
+// modern targets
+const babelTargets = [
+  'defaults',
+  'chrome >= 87',
+  'safari >= 13',
+  'firefox >= 78',
+  'edge >= 88'
+];
+
+// legacy targets
+const legacyTargets = [
+  'defaults',
+  'chrome >= 87',
+  'safari >= 13',
+  'firefox >= 78',
+  'edge >= 88',
+  'android >= 7.1'
+];
+
+function viteLubanPlugin(
+  opts: {
+    root?: string;
+
+    vue?: boolean;
+    ssl?: boolean;
+    svg?: boolean;
+    i18n?: boolean;
+    legacy?: boolean;
+    visualizer?: boolean;
+    circularDependency?: boolean;
+    split?: boolean;
+
+    i18nIncludes?: string | string[];
+
+    sitemap?: {
+      domains: string[];
+      languages: string[];
+      pages: [];
+      defaultLanguage: (domain: string) => string;
+    };
+
+    visualizerFilename?: string;
+
+    legacyOptions?: {
+      targets?: Targets;
+      modernTargets?: Targets;
+    };
+  } = {}
+) {
+  // root
+  const root = opts.root ?? process.cwd();
+
+  const normalizePaths = <T extends string | string[]>(p: T): T => {
+    if (Array.isArray(p)) {
+      return p.map((v) => {
+        return normalizePaths(v);
+      }) as T;
+    }
+    if (path.isAbsolute(p)) return p;
+    return path.resolve(root, p) as T;
+  };
+
+  // default configs
+  const lubanConfigPlugin: Plugin = {
+    name: 'luban:config',
+    async config(config, { mode }) {
+      // envs
+      const envPrefixSet = new Set(config.envPrefix ?? []);
+      ['VITE_', 'NODE_', '__VUE_', '__INTLIFY_'].forEach((v) => {
+        envPrefixSet.add(v);
+      });
+      const envPrefix = [...envPrefixSet];
+      const envDir = config.envDir ?? path.resolve(root, './envs');
+      const env = loadEnv(mode, envDir, envPrefix);
+
+      // base
+      const base = config.base ?? (env.VITE_PUBLIC_URL || '/');
+
+      return {
+        root,
+        envDir,
+        envPrefix,
+        define: {
+          __VUE_PROD_DEVTOOLS__: env['process.env.NODE_ENV'] === 'development',
+          __VUE_I18N_LEGACY_API_: false,
+          __VUE_I18N_FULL_INSTALL__: false,
+          __INTLIFY_PROD_DEVTOOLS__: false
+        },
+        base,
+        resolve: {
+          alias: {
+            'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'
+          }
+        },
+        css: {
+          modules: {
+            generateScopedName: function (name, filename) {
+              return createClassNamehash({
+                root,
+                name,
+                filename,
+                prefix: 'lb-',
+                classCompress: true
+              });
+            }
+          }
+        },
+        build: {
+          target: config.build?.target ?? esTargets
+        },
+        minify: config.build?.minify ?? 'terser',
+        rollupOptions: {
+          maxParallelFileOps:
+            config.build?.rollupOptions?.maxParallelFileOps ?? 5,
+          output: {
+            sourcemap:
+              (config.build?.rollupOptions?.output as any)?.sourcemap ?? false,
+            manualChunks:
+              (config.build?.rollupOptions?.output as any)?.manualChunks ??
+              ((id: string) => {
+                // vue
+                if (
+                  /node_modules\/(@vue|vue|vue-router|vue-i18n|@intlify|pinia|pinia-di)\//.test(
+                    id
+                  )
+                ) {
+                  return 'vue';
+                }
+
+                // validate
+                if (
+                  /node_modules\/(@vee-validate\/rules|vee-validate)\//.test(id)
+                ) {
+                  return 'validate';
+                }
+
+                // vendor
+                if (/node_modules\//.test(id)) {
+                  return 'vendor';
+                }
+              })
+          }
+        }
+      };
+    }
+  };
+
+  // css dts plugin
+  const cssModulesDtsPlugin = {
+    name: 'luban:css-modules-dts'
+  };
+
+  // env dts plugin
+  const envDtsPlugin = {
+    name: 'luban:env-dts'
+  };
+
+  // site map plugin
+  const sitemapPlugin = {
+    name: 'luban:sitemap'
+  };
+
+  const plugins: (Plugin | Plugin[])[] = [
+    lubanConfigPlugin,
+    cssModulesDtsPlugin,
+    envDtsPlugin,
+    sitemapPlugin
+  ];
+
+  if (opts.vue !== false) {
+    plugins.push(vue());
+  }
+
+  if (opts.ssl !== false) {
+    plugins.push(basicSsl());
+  }
+
+  if (opts.svg !== false) {
+    plugins.push(
+      svgLoader({
+        defaultImport: 'url'
+      })
+    );
+  }
+
+  if (opts.i18n !== false) {
+    plugins.push(
+      vueI18nPlugin({
+        include: normalizePaths(opts.i18nIncludes ?? 'src/i18n/locales/**')
+      })
+    );
+  }
+
+  if (opts.visualizer !== false) {
+    plugins.push(
+      visualizer({
+        emitFile: true,
+        filename: normalizePaths(opts.visualizerFilename ?? 'stats.html')
+      })
+    );
+  }
+
+  if (opts.circularDependency !== false) {
+    plugins.push(
+      circularDependency({
+        failOnError: true,
+        exclude: /node_modules\//
+      })
+    );
+  }
+
+  if (opts.split !== false) {
+    plugins.push(splitVendorChunkPlugin());
+  }
+
+  if (opts.legacy !== false) {
+    plugins.push(
+      legacy({
+        targets: opts.legacyOptions?.targets ?? legacyTargets,
+        modernPolyfills: true,
+        modernTargets: opts.legacyOptions?.modernTargets ?? babelTargets
+      })
+    );
+  }
+
+  return plugins;
+}
+
+export default viteLubanPlugin;
