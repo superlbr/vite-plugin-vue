@@ -42,29 +42,68 @@ function viteLubanPlugin(
   opts: {
     root?: string;
 
-    vue?: boolean;
-    ssl?: boolean;
-    svg?: boolean;
-    i18n?: boolean;
-    legacy?: boolean;
-    visualizer?: boolean;
-    circularDependency?: boolean;
-    split?: boolean;
-
-    i18nIncludes?: string | string[];
-
-    sitemap?: {
-      domains: string[];
-      languages: string[];
-      pages: [];
-      defaultLanguage: (domain: string) => string;
+    vue?: {
+      enable?: boolean;
     };
 
-    visualizerFilename?: string;
+    ssl?: {
+      enable?: boolean;
+    };
 
-    legacyOptions?: {
-      targets?: Targets;
-      modernTargets?: Targets;
+    svg?: {
+      enable?: boolean;
+    };
+
+    i18n?: {
+      enable?: boolean;
+      options?: {
+        includes?: string | string[];
+      };
+    };
+
+    legacy?: {
+      enable?: boolean;
+      options?: {
+        targets?: Targets;
+        modernTargets?: Targets;
+      };
+    };
+
+    visualizer?: {
+      enable?: boolean;
+      options?: {
+        filename?: string;
+      };
+    };
+
+    circularDependency?: {
+      enable?: boolean;
+    };
+
+    split?: {
+      enable?: boolean;
+    };
+
+    cssModulesDts?: {
+      enable?: boolean;
+    };
+
+    envDts?: {
+      enable?: boolean;
+      options?: {
+        filename?: string;
+      };
+    };
+
+    sitemap?: {
+      enable?: string;
+      options?: {
+        domains: string[];
+        languages: string[];
+        pages: [];
+        defaultLanguage: (domain: string) => string;
+        filename?: string;
+      };
     };
   } = {}
 ) {
@@ -188,15 +227,15 @@ function viteLubanPlugin(
     sitemapPlugin
   ];
 
-  if (opts.vue !== false) {
+  if (opts.vue?.enable !== false) {
     plugins.push(vue());
   }
 
-  if (opts.ssl !== false) {
+  if (opts.ssl?.enable !== false) {
     plugins.push(basicSsl());
   }
 
-  if (opts.svg !== false) {
+  if (opts.svg?.enable !== false) {
     plugins.push(
       svgLoader({
         defaultImport: 'url'
@@ -204,24 +243,28 @@ function viteLubanPlugin(
     );
   }
 
-  if (opts.i18n !== false) {
+  if (opts.i18n?.enable !== false) {
     plugins.push(
       vueI18nPlugin({
-        include: normalizePaths(opts.i18nIncludes ?? 'src/i18n/locales/**')
+        include: normalizePaths(
+          opts.i18n?.options?.includes ?? 'src/i18n/locales/**'
+        )
       })
     );
   }
 
-  if (opts.visualizer !== false) {
+  if (opts.visualizer?.enable !== false) {
     plugins.push(
       visualizer({
         emitFile: true,
-        filename: normalizePaths(opts.visualizerFilename ?? 'stats.html')
+        filename: normalizePaths(
+          opts.visualizer.options?.filename ?? 'stats.html'
+        )
       })
     );
   }
 
-  if (opts.circularDependency !== false) {
+  if (opts.circularDependency?.enable !== false) {
     plugins.push(
       circularDependency({
         failOnError: true,
@@ -230,16 +273,16 @@ function viteLubanPlugin(
     );
   }
 
-  if (opts.split !== false) {
+  if (opts.split?.enable !== false) {
     plugins.push(splitVendorChunkPlugin());
   }
 
-  if (opts.legacy !== false) {
+  if (opts.legacy?.enable !== false) {
     plugins.push(
       legacy({
-        targets: opts.legacyOptions?.targets ?? legacyTargets,
+        targets: opts.legacy?.options?.targets ?? legacyTargets,
         modernPolyfills: true,
-        modernTargets: opts.legacyOptions?.modernTargets ?? babelTargets
+        modernTargets: opts.legacy?.options?.modernTargets ?? babelTargets
       })
     );
   }
