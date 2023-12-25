@@ -1,5 +1,8 @@
-import * as path from 'path';
-import { splitVendorChunkPlugin, Plugin, loadEnv } from 'vite';
+import * as path from 'node:path';
+import * as process from 'node:process';
+import chalk from 'chalk';
+import type { Plugin } from 'vite';
+import { loadEnv, splitVendorChunkPlugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import vueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
@@ -7,14 +10,15 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import circularDependency from 'vite-plugin-circullar-dependency';
 import legacy from 'vite-plugin-legacy-extends';
 import svgLoader from 'vite-svg-loader';
-import { createClassNamehash } from './utils/createClassNameHash';
+import { createClassNamehash } from '@/utils/createClassNameHash';
+import cssModulesDtsPlugin from '@/utils/cssModulesDtsPlugin';
 
 type Targets =
   | string
   | string[]
   | {
-      [key: string]: string;
-    };
+    [key: string]: string;
+  };
 
 // build targets
 const esTargets = ['es2015', 'chrome87', 'safari13', 'firefox78', 'edge88'];
@@ -116,7 +120,8 @@ function viteLubanPlugin(
         return normalizePaths(v);
       }) as T;
     }
-    if (path.isAbsolute(p)) return p;
+    if (path.isAbsolute(p))
+      return p;
     return path.resolve(root, p) as T;
   };
 
@@ -124,20 +129,21 @@ function viteLubanPlugin(
   const lubanConfigPlugin: Plugin = {
     name: 'luban:config',
     async config(config, { mode }) {
+      const confRoot = config.root || process.cwd();
       // envs
       const envPrefixSet = new Set(config.envPrefix ?? []);
       ['VITE_', 'NODE_', '__VUE_', '__INTLIFY_'].forEach((v) => {
         envPrefixSet.add(v);
       });
       const envPrefix = [...envPrefixSet];
-      const envDir = config.envDir ?? path.resolve(root, './envs');
+      const envDir = config.envDir ?? path.resolve(confRoot, './envs');
       const env = loadEnv(mode, envDir, envPrefix);
 
       // base
       const base = config.base ?? (env.VITE_PUBLIC_URL || '/');
 
       return {
-        root,
+        root: confRoot,
         envDir,
         envPrefix,
         define: {
@@ -152,9 +158,12 @@ function viteLubanPlugin(
             'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'
           }
         },
+        server: {
+          host: '0.0.0.0'
+        },
         css: {
           modules: {
-            generateScopedName: function (name, filename) {
+            generateScopedName(name, filename) {
               return createClassNamehash({
                 root,
                 name,
@@ -176,38 +185,36 @@ function viteLubanPlugin(
             sourcemap:
               (config.build?.rollupOptions?.output as any)?.sourcemap ?? false,
             manualChunks:
-              (config.build?.rollupOptions?.output as any)?.manualChunks ??
-              ((id: string) => {
+              (config.build?.rollupOptions?.output as any)?.manualChunks
+              ?? ((id: string) => {
                 // vue
                 if (
                   /node_modules\/(@vue|vue|vue-router|vue-i18n|@intlify|pinia|pinia-di)\//.test(
                     id
                   )
-                ) {
+                )
                   return 'vue';
-                }
 
                 // validate
                 if (
                   /node_modules\/(@vee-validate\/rules|vee-validate)\//.test(id)
-                ) {
+                )
                   return 'validate';
-                }
 
                 // vendor
-                if (/node_modules\//.test(id)) {
+                if (/node_modules\//.test(id))
                   return 'vendor';
-                }
               })
           }
         }
       };
+    },
+    configResolved: (conf) => {
+      if (conf.root !== root) {
+        console.log(chalk.red(`[@luban-ui/vite-plugin-vue] This plugin's root is not match with vite's root, the website may not run properly.`));
+        console.log(chalk.red(`[@luban-ui/vite-plugin-vue] Please clearly pass the root parameter to this plugin and vite!`));
+      }
     }
-  };
-
-  // css dts plugin
-  const cssModulesDtsPlugin = {
-    name: 'luban:css-modules-dts'
   };
 
   // env dts plugin
@@ -222,18 +229,16 @@ function viteLubanPlugin(
 
   const plugins: (Plugin | Plugin[])[] = [
     lubanConfigPlugin,
-    cssModulesDtsPlugin,
+    cssModulesDtsPlugin(),
     envDtsPlugin,
     sitemapPlugin
   ];
 
-  if (opts.vue?.enable !== false) {
+  if (opts.vue?.enable !== false)
     plugins.push(vue());
-  }
 
-  if (opts.ssl?.enable !== false) {
+  if (opts.ssl?.enable !== false)
     plugins.push(basicSsl());
-  }
 
   if (opts.svg?.enable !== false) {
     plugins.push(
@@ -258,7 +263,7 @@ function viteLubanPlugin(
       visualizer({
         emitFile: true,
         filename: normalizePaths(
-          opts.visualizer.options?.filename ?? 'stats.html'
+          opts.visualizer?.options?.filename ?? 'stats.html'
         )
       })
     );
@@ -273,9 +278,8 @@ function viteLubanPlugin(
     );
   }
 
-  if (opts.split?.enable !== false) {
+  if (opts.split?.enable !== false)
     plugins.push(splitVendorChunkPlugin());
-  }
 
   if (opts.legacy?.enable !== false) {
     plugins.push(

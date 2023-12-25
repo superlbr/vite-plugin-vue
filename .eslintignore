@@ -1,3 +1,0 @@
-!.*.(js|ts|json|jsx|tsx)
-**/dist/**/*.*
-**/*.d.ts

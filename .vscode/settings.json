@@ -1,13 +1,39 @@
 {
   "path-autocomplete.pathMappings": {
-    "@": "${folder}/src",
-    "~@": "${folder}/src"
+    "@": "${folder}/src"
   },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "volar.takeOverMode.extension": "Vue.volar",
-  "typescript.tsserver.pluginPaths": ["typescript-plugin-css-modules"],
   "css.validate": false,
   "less.validate": false,
   "scss.validate": false,
-  "stylelint.enable": true
+  "stylelint.enable": false,
+  "eslint.enable": true,
+
+  // Enable the ESlint flat config support
+  "eslint.experimental.useFlatConfig": true,
+
+  // Disable the default formatter, use eslint instead
+  "prettier.enable": false,
+  "editor.formatOnSave": false,
+
+  // Auto fix
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  // Enable eslint for all supported languages
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue",
+    "html",
+    "markdown",
+    "json",
+    "jsonc",
+    "yaml",
+    "toml"
+  ]
 }

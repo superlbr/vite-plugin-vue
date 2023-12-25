@@ -1,7 +1,7 @@
-import * as path from 'path';
+import * as path from 'node:path';
 import { loadEnv as viteLoadEnv } from 'vite';
 
-export const loadEnv = (args: { root: string; mode: string }) => {
+export function loadEnv(args: { root: string; mode: string }) {
   const envDir = path.resolve(args.root, './envs');
   const envPrefix = ['VITE_', 'NODE_', '__VUE_', '__INTLIFY_'];
   const env = viteLoadEnv(args.mode, envDir, envPrefix);
@@ -17,4 +17,4 @@ export const loadEnv = (args: { root: string; mode: string }) => {
   });
 
   return { envDir, envPrefix, env, define };
-};
+}

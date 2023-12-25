@@ -1,9 +1,10 @@
-import path from 'path';
-import crypto from 'crypto';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import process from 'node:process';
 
 const hashMap: Record<string, string> = {};
 
-const getUniqueName = (content: string, p: string): string => {
+function getUniqueName(content: string, p: string): string {
   const hash = crypto.createHash('md5');
   hash.update(content);
   const hashText = hash.digest('hex').substring(0, 5);
@@ -15,19 +16,20 @@ const getUniqueName = (content: string, p: string): string => {
   }
 
   // self
-  if (hashMap[hashText] === p) return hashText;
+  if (hashMap[hashText] === p)
+    return hashText;
 
   // repeated
   return getUniqueName(`${content}~`, p);
-};
+}
 
-export const createClassNamehash = (args: {
+export function createClassNamehash(args: {
   root: string;
   name: string;
   filename: string;
   prefix: string;
   classCompress?: boolean;
-}) => {
+}) {
   const { root, name, filename, prefix, classCompress = true } = args;
   const p = `${path.relative(root, filename).replace(/\\/g, '/')}--${name}`;
   const basename = path
@@ -39,10 +41,10 @@ export const createClassNamehash = (args: {
   const content = `${prefix}:${p}`;
   const hash = getUniqueName(content, p);
 
-  const cls =
-    process.env.NODE_ENV === 'development' || !classCompress
+  const cls
+    = process.env.NODE_ENV === 'development' || !classCompress
       ? `${dirname}_${basename}_${name}__${hash}`
       : `${hash}`;
 
   return prefix ? `${prefix}${cls}` : cls;
-};
+}
