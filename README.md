@@ -1,4 +1,6 @@
-# vite plugin for luban ui sites
+# vite plugin for vue sites
+
+> Vite plugin presets, for vue sites.
 
 ## Install
 
