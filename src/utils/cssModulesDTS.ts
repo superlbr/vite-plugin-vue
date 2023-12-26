@@ -9,9 +9,8 @@ import DtsCreator from 'typed-css-modules';
 
 const RealDtsCreator = (DtsCreator as any).default;
 
-export const start = (opts: { root?: string; files?: string[] } = {}) => {
-  const root = opts.root || process.cwd();
-  const files = opts.files || ['**/*.module.scss'];
+export const start = (opts: { root?: string; files?: string[]; generateAll?: boolean } = {}) => {
+  const { root = process.cwd(), files = ['**/*.module.scss'], generateAll = true } = opts;
   const creator = new RealDtsCreator({
     rootDir: root,
     namedExports: true,
@@ -35,44 +34,56 @@ export const start = (opts: { root?: string; files?: string[] } = {}) => {
       });
       const content = await creator.create(f, out.css, true);
       return await content.writeFile(() => content.formatted || '');
-    }
-    catch (e) {
-      console.log('======css modules dts error:======');
+    } catch (e) {
+      console.log('[cssModulesDts Error]');
       console.error(e);
     }
   }
 
-  let watchers: Watcher[] = [];
+  try {
+    // watch files
+    let watchers: Watcher[] = [];
 
-  files.forEach((p) => {
-    const watcher = watch(
-      root,
-      {
-        recursive: true,
-        filter: f => minimatch(f, p)
-      },
-      (evt, name) => {
-        if (evt === 'update')
-          updateFile(name);
+    files.forEach((p) => {
+      // generate all
+      if (generateAll) {
+        glob(p, {
+          cwd: root
+        }).then((files) => {
+          files.forEach((f) => {
+            updateFile(path.resolve(root, f));
+          });
+        });
       }
-    );
-    watchers.push(watcher);
 
-    glob(p, {
-      cwd: root
-    }).then((files) => {
-      files.forEach((f) => {
-        updateFile(path.resolve(root, f));
+      const watcher = watch(
+        root,
+        {
+          recursive: true,
+          filter: f => minimatch(f, p)
+        },
+        (evt, name) => {
+          if (evt === 'update')
+            updateFile(name);
+        }
+      );
+      watcher.on('error', (e) => {
+        console.log('[cssModulesDts Error]');
+        console.log(e);
       });
+      watchers.push(watcher);
     });
-  });
 
-  const stop = () => {
-    watchers.forEach((watcher) => {
-      watcher.close();
-    });
-    watchers = [];
-  };
+    const stop = () => {
+      watchers.forEach((watcher) => {
+        watcher.close();
+      });
+      watchers = [];
+    };
 
-  return stop;
+    return stop;
+  } catch (e) {
+    console.log('[cssModulesDts Error]');
+    console.log(e);
+  }
 };

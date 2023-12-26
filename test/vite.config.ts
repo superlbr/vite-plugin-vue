@@ -9,10 +9,30 @@ export default defineConfig(() => {
     root,
     server: {
       host: '0.0.0.0',
-      port: 5175
+      port: 5174
     },
+
     plugins: [viteLubanPlugin({
-      root
+      root,
+      ssl: {
+        enable: false
+      },
+      mkcert: {
+        enable: true
+      },
+      sitemap: {
+        enable: true,
+        options: {
+          domains: ['www.luban-ui.dev'],
+          languages: ['zh-CN', 'en-US'],
+          defaultLanguage: 'zh-CN',
+          pages: [
+            {
+              path: '/'
+            }
+          ]
+        }
+      }
     })],
     build: {
       rollupOptions: {

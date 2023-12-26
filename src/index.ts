@@ -3,22 +3,23 @@ import * as process from 'node:process';
 import chalk from 'chalk';
 import type { Plugin } from 'vite';
 import { loadEnv, splitVendorChunkPlugin } from 'vite';
+import type { Options as VueOptions } from '@vitejs/plugin-vue';
 import vue from '@vitejs/plugin-vue';
 import basicSsl from '@vitejs/plugin-basic-ssl';
+import type { MkcertPluginOptions } from 'vite-plugin-mkcert';
+import mkcert from 'vite-plugin-mkcert';
 import vueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
-import circularDependency from 'vite-plugin-circullar-dependency';
+import circularDependency from 'vite-plugin-circular-dependency';
 import legacy from 'vite-plugin-legacy-extends';
 import svgLoader from 'vite-svg-loader';
 import { createClassNamehash } from '@/utils/createClassNameHash';
-import cssModulesDtsPlugin from '@/utils/cssModulesDtsPlugin';
-
-type Targets =
-  | string
-  | string[]
-  | {
-    [key: string]: string;
-  };
+import type { CssModulesDtsPluginOptions } from '@/plugins/cssModulesDtsPlugin';
+import cssModulesDtsPlugin from '@/plugins/cssModulesDtsPlugin';
+import type { EnvDtsPluginOptions } from '@/plugins/envDtsPlugin';
+import envDtsPlugin from '@/plugins/envDtsPlugin';
+import type { SitemapPluginOptions } from '@/plugins/sitemapPlugin';
+import sitemapPlugin from '@/plugins/sitemapPlugin';
 
 // build targets
 const esTargets = ['es2015', 'chrome87', 'safari13', 'firefox78', 'edge88'];
@@ -42,74 +43,70 @@ const legacyTargets = [
   'android >= 7.1'
 ];
 
-function viteLubanPlugin(
-  opts: {
-    root?: string;
+export interface PluginOptions {
+  root?: string;
 
-    vue?: {
-      enable?: boolean;
-    };
+  vue?: {
+    enable?: boolean;
+    options?: VueOptions;
+  };
 
-    ssl?: {
-      enable?: boolean;
-    };
+  ssl?: {
+    enable?: boolean;
+  };
 
-    svg?: {
-      enable?: boolean;
-    };
+  mkcert?: {
+    enable?: boolean;
+    options?: MkcertPluginOptions;
+  };
 
-    i18n?: {
-      enable?: boolean;
-      options?: {
-        includes?: string | string[];
-      };
-    };
+  svg?: {
+    enable?: boolean;
+    options?: Parameters<typeof svgLoader>[0];
+  };
 
-    legacy?: {
-      enable?: boolean;
-      options?: {
-        targets?: Targets;
-        modernTargets?: Targets;
-      };
-    };
+  i18n?: {
+    enable?: boolean;
+    options?: Parameters<typeof vueI18nPlugin>[0];
+  };
 
-    visualizer?: {
-      enable?: boolean;
-      options?: {
-        filename?: string;
-      };
-    };
+  legacy?: {
+    enable?: boolean;
+    options?: Parameters<typeof legacy>[0];
+  };
 
-    circularDependency?: {
-      enable?: boolean;
-    };
+  visualizer?: {
+    enable?: boolean;
+    options?: Parameters<typeof visualizer>[0];
+  };
 
-    split?: {
-      enable?: boolean;
-    };
+  circularDependency?: {
+    enable?: boolean;
+    options?: Parameters<typeof circularDependency>[0];
+  };
 
-    cssModulesDts?: {
-      enable?: boolean;
-    };
+  split?: {
+    enable?: boolean;
+  };
 
-    envDts?: {
-      enable?: boolean;
-      options?: {
-        filename?: string;
-      };
-    };
+  cssModulesDts?: {
+    enable?: boolean;
+    options?: CssModulesDtsPluginOptions;
+  };
 
-    sitemap?: {
-      enable?: string;
-      options?: {
-        domains: string[];
-        languages: string[];
-        pages: [];
-        defaultLanguage: (domain: string) => string;
-        filename?: string;
-      };
-    };
-  } = {}
+  envDts?: {
+    enable?: boolean;
+    options?: EnvDtsPluginOptions;
+  };
+
+  sitemap?: {
+    enable?: boolean;
+    options?: SitemapPluginOptions;
+  };
+}
+
+function viteLubanVuePlugin(
+  opts: PluginOptions = {}
 ) {
   // root
   const root = opts.root ?? process.cwd();
@@ -217,33 +214,49 @@ function viteLubanPlugin(
     }
   };
 
-  // env dts plugin
-  const envDtsPlugin = {
-    name: 'luban:env-dts'
-  };
-
-  // site map plugin
-  const sitemapPlugin = {
-    name: 'luban:sitemap'
-  };
-
   const plugins: (Plugin | Plugin[])[] = [
-    lubanConfigPlugin,
-    cssModulesDtsPlugin(),
-    envDtsPlugin,
-    sitemapPlugin
+    lubanConfigPlugin
   ];
 
-  if (opts.vue?.enable !== false)
-    plugins.push(vue());
+  if (opts.cssModulesDts?.enable) {
+    plugins.push(
+      cssModulesDtsPlugin(opts.cssModulesDts.options)
+    );
+  }
 
-  if (opts.ssl?.enable !== false)
+  if (opts.envDts?.enable) {
+    plugins.push(
+      envDtsPlugin(opts.envDts.options)
+    );
+  }
+
+  if (opts.sitemap?.enable && opts.sitemap.options) {
+    plugins.push(
+      sitemapPlugin(opts.sitemap.options)
+    );
+  }
+
+  if (opts.vue?.enable !== false)
+    plugins.push(vue({
+      ...opts.vue?.options
+    }));
+
+  if (opts.ssl?.enable !== false) {
     plugins.push(basicSsl());
+  }
+
+  if (opts.mkcert?.enable) {
+    plugins.push(mkcert({
+      source: 'coding',
+      ...opts.mkcert?.options
+    }) as Plugin);
+  }
 
   if (opts.svg?.enable !== false) {
     plugins.push(
       svgLoader({
-        defaultImport: 'url'
+        defaultImport: 'url',
+        ...opts.svg?.options
       })
     );
   }
@@ -252,8 +265,9 @@ function viteLubanPlugin(
     plugins.push(
       vueI18nPlugin({
         include: normalizePaths(
-          opts.i18n?.options?.includes ?? 'src/i18n/locales/**'
-        )
+          'src/i18n/locales/**'
+        ),
+        ...opts.i18n?.options
       })
     );
   }
@@ -263,8 +277,9 @@ function viteLubanPlugin(
       visualizer({
         emitFile: true,
         filename: normalizePaths(
-          opts.visualizer?.options?.filename ?? 'stats.html'
-        )
+          'stats.html'
+        ),
+        ...opts.visualizer?.options
       })
     );
   }
@@ -272,8 +287,8 @@ function viteLubanPlugin(
   if (opts.circularDependency?.enable !== false) {
     plugins.push(
       circularDependency({
-        failOnError: true,
-        exclude: /node_modules\//
+        exclude: /node_modules\//,
+        ...opts.circularDependency?.options
       })
     );
   }
@@ -284,9 +299,10 @@ function viteLubanPlugin(
   if (opts.legacy?.enable !== false) {
     plugins.push(
       legacy({
-        targets: opts.legacy?.options?.targets ?? legacyTargets,
+        targets: legacyTargets,
         modernPolyfills: true,
-        modernTargets: opts.legacy?.options?.modernTargets ?? babelTargets
+        modernTargets: babelTargets,
+        ...opts.legacy?.options
       })
     );
   }
@@ -294,4 +310,4 @@ function viteLubanPlugin(
   return plugins;
 }
 
-export default viteLubanPlugin;
+export default viteLubanVuePlugin;
