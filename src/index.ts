@@ -103,6 +103,11 @@ export interface PluginOptions {
     enable?: boolean;
     options?: SitemapPluginOptions;
   };
+
+  cdn?: {
+    url?: string;
+    assetsPattern?: RegExp;
+  };
 }
 
 function viteLubanVuePlugin(
@@ -137,10 +142,11 @@ function viteLubanVuePlugin(
       const env = loadEnv(mode, envDir, envPrefix);
 
       // base
-      const base = config.base ?? (env.VITE_PUBLIC_URL || '/');
+      const base = config.base || '/';
 
       return {
         root: confRoot,
+        base,
         envDir,
         envPrefix,
         define: {
@@ -149,7 +155,6 @@ function viteLubanVuePlugin(
           __VUE_I18N_FULL_INSTALL__: false,
           __INTLIFY_PROD_DEVTOOLS__: false
         },
-        base,
         resolve: {
           alias: {
             'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'
@@ -203,12 +208,28 @@ function viteLubanVuePlugin(
                   return 'vendor';
               })
           }
+        },
+        experimental: {
+          renderBuiltUrl(
+            filename: string
+          ) {
+            const ext = path.extname(filename);
+            // cdn
+            const cndUrl = (opts.cdn?.url || '').replace(/\/$/, '');
+            const pattern = opts.cdn?.assetsPattern || /\.(js|css|jpg|jpeg|png|gif|ico|svg|eot|woff|woff2|ttf|swf|mp3|mp4|wov|avi|flv|ogg|mpeg4|webm)$/;
+
+            if (pattern.test(ext) && cndUrl) {
+              return `${cndUrl}/${filename}`;
+            }
+
+            return { relative: true };
+          }
         }
       };
     },
     configResolved: (conf) => {
       if (conf.root !== root) {
-        console.log(chalk.red(`[@luban-ui/vite-plugin-vue] This plugin's root is not match with vite's root, the website may not run properly.`));
+        console.log(chalk.red(`[@luban-ui/vite-plugin-vue] This plugin's root [${root}] is not match with vite's root [${conf.root}], the website may not run properly.`));
         console.log(chalk.red(`[@luban-ui/vite-plugin-vue] Please clearly pass the root parameter to this plugin and vite!`));
       }
     }
@@ -218,21 +239,21 @@ function viteLubanVuePlugin(
     lubanConfigPlugin
   ];
 
-  if (opts.cssModulesDts?.enable) {
+  if (opts.cssModulesDts?.enable !== false) {
     plugins.push(
-      cssModulesDtsPlugin(opts.cssModulesDts.options)
+      cssModulesDtsPlugin(opts.cssModulesDts?.options)
     );
   }
 
-  if (opts.envDts?.enable) {
+  if (opts.envDts?.enable !== false) {
     plugins.push(
-      envDtsPlugin(opts.envDts.options)
+      envDtsPlugin(opts.envDts?.options)
     );
   }
 
-  if (opts.sitemap?.enable && opts.sitemap.options) {
+  if (opts.sitemap?.enable && opts.sitemap?.options) {
     plugins.push(
-      sitemapPlugin(opts.sitemap.options)
+      sitemapPlugin(opts.sitemap?.options)
     );
   }
 
@@ -265,7 +286,7 @@ function viteLubanVuePlugin(
     plugins.push(
       vueI18nPlugin({
         include: normalizePaths(
-          'src/i18n/locales/**'
+          'src/i18n/locales/**/*.json'
         ),
         ...opts.i18n?.options
       })
@@ -276,9 +297,7 @@ function viteLubanVuePlugin(
     plugins.push(
       visualizer({
         emitFile: true,
-        filename: normalizePaths(
-          'stats.html'
-        ),
+        filename: 'stats.html',
         ...opts.visualizer?.options
       })
     );

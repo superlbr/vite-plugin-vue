@@ -1,7 +1,7 @@
 {
   "name": "@luban-ui/vite-plugin-vue",
   "type": "module",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "homepage": "https://github.com/ccqgithub/vite-plugin-vue",
   "repository": "https://github.com/luban-dev/vite-plugin-vue",
   "exports": {
@@ -12,7 +12,7 @@
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -22,6 +22,7 @@
     "lint": "ESLINT_USE_FLAT_CONFIG=true eslint --max-warnings=0",
     "build": "tsup src/index.ts",
     "test": "vite --config test/vite.config.ts",
+    "test-build": "vite build --config test/vite.config.ts",
     "release": "npm publish --access=public"
   },
   "peerDependencies": {
