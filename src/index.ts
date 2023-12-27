@@ -13,9 +13,9 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import circularDependency from 'vite-plugin-circular-dependency';
 import legacy from 'vite-plugin-legacy-extends';
 import svgLoader from 'vite-svg-loader';
+import type { Options as CssModulesDtsOptions } from '@luban-ui/vite-plugun-css-modules-dts';
+import cssModulesDts from '@luban-ui/vite-plugun-css-modules-dts';
 import { createClassNamehash } from '@/utils/createClassNameHash';
-import type { CssModulesDtsPluginOptions } from '@/plugins/cssModulesDtsPlugin';
-import cssModulesDtsPlugin from '@/plugins/cssModulesDtsPlugin';
 import type { EnvDtsPluginOptions } from '@/plugins/envDtsPlugin';
 import envDtsPlugin from '@/plugins/envDtsPlugin';
 import type { SitemapPluginOptions } from '@/plugins/sitemapPlugin';
@@ -91,7 +91,7 @@ export interface PluginOptions {
 
   cssModulesDts?: {
     enable?: boolean;
-    options?: CssModulesDtsPluginOptions;
+    options?: CssModulesDtsOptions;
   };
 
   envDts?: {
@@ -241,7 +241,7 @@ function viteLubanVuePlugin(
 
   if (opts.cssModulesDts?.enable !== false) {
     plugins.push(
-      cssModulesDtsPlugin(opts.cssModulesDts?.options)
+      cssModulesDts(opts.cssModulesDts?.options)
     );
   }
 

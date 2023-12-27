@@ -1,6 +1,6 @@
 // src/index.ts
-import * as path7 from "path";
-import * as process6 from "process";
+import * as path6 from "path";
+import * as process4 from "process";
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
 var ANSI_BACKGROUND_OFFSET = 10;
@@ -501,6 +501,7 @@ import { visualizer } from "rollup-plugin-visualizer";
 import circularDependency from "vite-plugin-circular-dependency";
 import legacy from "vite-plugin-legacy-extends";
 import svgLoader from "vite-svg-loader";
+import cssModulesDts from "@luban-ui/vite-plugun-css-modules-dts";
 
 // src/utils/createClassNameHash.ts
 import path from "path";
@@ -530,144 +531,16 @@ function createClassNamehash(args) {
   return prefix ? `${prefix}${cls}` : cls;
 }
 
-// src/plugins/cssModulesDtsPlugin.ts
-import process4 from "process";
-
-// src/utils/cssModulesDts.ts
-import path2 from "path";
-import process3 from "process";
-import { pathToFileURL } from "url";
-import watch from "node-watch";
-import * as sass from "sass";
-import { glob } from "glob";
-import { minimatch } from "minimatch";
-import DtsCreator from "typed-css-modules";
-var RealDtsCreator = DtsCreator.default;
-var start = (opts = {}) => {
-  const {
-    root = process3.cwd(),
-    files = ["**/*.module.scss"],
-    generateAll = true,
-    alias = []
-  } = opts;
-  const creator = new RealDtsCreator({
-    rootDir: root,
-    namedExports: true,
-    camelCase: "none"
-  });
-  async function updateFile(f) {
-    try {
-      const out = await sass.compileAsync(f, {
-        importers: [
-          {
-            findFileUrl(url) {
-              for (const item of alias) {
-                if (typeof item.find === "string") {
-                  if (url.startsWith(item.find)) {
-                    const p = path2.join(
-                      item.replacement,
-                      url.substring(item.find.length)
-                    );
-                    const res = pathToFileURL(p);
-                    return res;
-                  }
-                }
-                if (item.find instanceof RegExp) {
-                  if (item.find.test(url)) {
-                    const p = url.replace(item.find, item.replacement);
-                    const res = pathToFileURL(p);
-                    return res;
-                  }
-                }
-              }
-              return null;
-            }
-          }
-        ]
-      });
-      const content = await creator.create(f, out.css, true);
-      return await content.writeFile(() => content.formatted || "");
-    } catch (e) {
-      console.log("[cssModulesDts Error]");
-      console.error(e);
-    }
-  }
-  try {
-    let watchers = [];
-    files.forEach((p) => {
-      if (generateAll) {
-        glob(p, {
-          cwd: root
-        }).then((files2) => {
-          files2.forEach((f) => {
-            updateFile(path2.resolve(root, f));
-          });
-        });
-      }
-      const watcher = watch(
-        root,
-        {
-          recursive: true,
-          filter: (f) => minimatch(f, p)
-        },
-        (evt, name) => {
-          if (evt === "update")
-            updateFile(name);
-        }
-      );
-      watcher.on("error", (e) => {
-        console.log("[cssModulesDts Error]");
-        console.log(e);
-      });
-      watchers.push(watcher);
-    });
-    const stop = () => {
-      watchers.forEach((watcher) => {
-        watcher.close();
-      });
-      watchers = [];
-    };
-    return stop;
-  } catch (e) {
-    console.log("[cssModulesDts Error]");
-    console.log(e);
-  }
-};
-
-// src/plugins/cssModulesDtsPlugin.ts
-var cssModulesDtsPlugin = (options = {}) => {
-  let root = "";
-  let alias = [];
-  let stop;
-  return {
-    name: "luban:css-moduless-dts",
-    configResolved: (conf) => {
-      root = conf.root;
-      alias = conf.resolve.alias;
-    },
-    buildStart: () => {
-      const started = !!process4.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED;
-      const { files = ["**/*.module.scss"] } = options;
-      stop = start({ root, files, generateAll: !started, alias });
-      process4.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED = "true";
-    },
-    buildEnd: () => {
-      stop?.();
-    }
-  };
-};
-var cssModulesDtsPlugin_default = cssModulesDtsPlugin;
-
 // src/plugins/envDtsPlugin.ts
-import path4 from "path";
+import path3 from "path";
 
 // src/utils/envDts.ts
-import path3 from "path";
+import path2 from "path";
 import * as fs from "fs";
-import watch2 from "node-watch";
+import watch from "node-watch";
 import dotenv from "dotenv";
-import { minimatch as minimatch2 } from "minimatch";
-var start2 = (opts) => {
+import { minimatch } from "minimatch";
+var start = (opts) => {
   const { envDir, filename, name } = opts;
   const generate2 = async () => {
     const dirs = await fs.promises.readdir(envDir);
@@ -675,7 +548,7 @@ var start2 = (opts) => {
 `;
     const readList = [];
     for (const dir of dirs) {
-      const f = path3.join(envDir, dir);
+      const f = path2.join(envDir, dir);
       const text = await fs.promises.readFile(f, "utf-8");
       const parsed = dotenv.parse(text);
       Object.keys(parsed).forEach((key) => {
@@ -695,11 +568,11 @@ var start2 = (opts) => {
   }
   try {
     let watchers = [];
-    const watcher = watch2(
-      path3.join(envDir),
+    const watcher = watch(
+      path2.join(envDir),
       {
         recursive: true,
-        filter: (f) => minimatch2(f, "*.env*")
+        filter: (f) => minimatch(f, "*.env*")
       },
       (evt, _) => {
         if (evt === "update") {
@@ -739,8 +612,8 @@ var envDtsPlugin = (options = {}) => {
       envDir = conf.envDir;
     },
     buildStart: () => {
-      const f = filename || path4.resolve(root, "custom-env.d.ts");
-      stop = start2({ envDir, filename: f, name });
+      const f = filename || path3.resolve(root, "custom-env.d.ts");
+      stop = start({ envDir, filename: f, name });
     },
     buildEnd: () => {
       stop?.();
@@ -750,11 +623,11 @@ var envDtsPlugin = (options = {}) => {
 var envDtsPlugin_default = envDtsPlugin;
 
 // src/plugins/sitemapPlugin.ts
-import process5 from "process";
-import path6 from "path";
+import process3 from "process";
+import path5 from "path";
 
 // src/utils/sitemap/sitemap.ts
-import path5 from "path";
+import path4 from "path";
 import fs2 from "fs";
 import ejs from "ejs";
 
@@ -782,12 +655,12 @@ var getUrl = (opts) => {
     page,
     lang,
     getLanguagePath = (p2, l) => {
-      return path5.join("/", l, p2);
+      return path4.join("/", l, p2);
     }
   } = opts;
   const defaultLang = page.defaultLanguage || opts.defaultLanguage;
   const pathWithLang = lang && lang !== defaultLang;
-  const p = pathWithLang ? getLanguagePath(page.path, lang) : path5.join("/", page.path);
+  const p = pathWithLang ? getLanguagePath(page.path, lang) : path4.join("/", page.path);
   return `https://${domain}${p}`;
 };
 var generateDomain = async (opts) => {
@@ -858,7 +731,7 @@ var sitemapPlugin = (options) => {
       root = conf.root;
     },
     buildStart: () => {
-      const started = !!process5.env.LUBAN_SITEMAP_PLUGIN_STARTED;
+      const started = !!process3.env.LUBAN_SITEMAP_PLUGIN_STARTED;
       if (started) {
         return;
       }
@@ -870,12 +743,12 @@ var sitemapPlugin = (options) => {
         getLanguagePath: options.getLanguagePath,
         filename: (d) => {
           if (options.domains.length > 1) {
-            return path6.resolve(root, `${d}.sitemap.xml`);
+            return path5.resolve(root, `${d}.sitemap.xml`);
           }
-          return path6.resolve(root, `sitemap.xml`);
+          return path5.resolve(root, `sitemap.xml`);
         }
       });
-      process5.env.LUBAN_SITEMAP_PLUGIN_STARTED = "true";
+      process3.env.LUBAN_SITEMAP_PLUGIN_STARTED = "true";
     },
     buildEnd: () => {
       stop?.();
@@ -902,27 +775,27 @@ var legacyTargets = [
   "android >= 7.1"
 ];
 function viteLubanVuePlugin(opts = {}) {
-  const root = opts.root ?? process6.cwd();
+  const root = opts.root ?? process4.cwd();
   const normalizePaths = (p) => {
     if (Array.isArray(p)) {
       return p.map((v) => {
         return normalizePaths(v);
       });
     }
-    if (path7.isAbsolute(p))
+    if (path6.isAbsolute(p))
       return p;
-    return path7.resolve(root, p);
+    return path6.resolve(root, p);
   };
   const lubanConfigPlugin = {
     name: "luban:config",
     async config(config, { mode }) {
-      const confRoot = config.root || process6.cwd();
+      const confRoot = config.root || process4.cwd();
       const envPrefixSet = new Set(config.envPrefix ?? []);
       ["VITE_", "NODE_", "__VUE_", "__INTLIFY_"].forEach((v) => {
         envPrefixSet.add(v);
       });
       const envPrefix = [...envPrefixSet];
-      const envDir = config.envDir ?? path7.resolve(confRoot, "./envs");
+      const envDir = config.envDir ?? path6.resolve(confRoot, "./envs");
       const env2 = loadEnv(mode, envDir, envPrefix);
       const base = config.base || "/";
       return {
@@ -979,7 +852,7 @@ function viteLubanVuePlugin(opts = {}) {
         },
         experimental: {
           renderBuiltUrl(filename) {
-            const ext = path7.extname(filename);
+            const ext = path6.extname(filename);
             const cndUrl = (opts.cdn?.url || "").replace(/\/$/, "");
             const pattern = opts.cdn?.assetsPattern || /\.(js|css|jpg|jpeg|png|gif|ico|svg|eot|woff|woff2|ttf|swf|mp3|mp4|wov|avi|flv|ogg|mpeg4|webm)$/;
             if (pattern.test(ext) && cndUrl) {
@@ -1002,7 +875,7 @@ function viteLubanVuePlugin(opts = {}) {
   ];
   if (opts.cssModulesDts?.enable !== false) {
     plugins.push(
-      cssModulesDtsPlugin_default(opts.cssModulesDts?.options)
+      cssModulesDts(opts.cssModulesDts?.options)
     );
   }
   if (opts.envDts?.enable !== false) {

@@ -33,8 +33,8 @@ __export(src_exports, {
   default: () => src_default
 });
 module.exports = __toCommonJS(src_exports);
-var path7 = __toESM(require("path"), 1);
-var process6 = __toESM(require("process"), 1);
+var path6 = __toESM(require("path"), 1);
+var process4 = __toESM(require("process"), 1);
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
 var ANSI_BACKGROUND_OFFSET = 10;
@@ -535,6 +535,7 @@ var import_rollup_plugin_visualizer = require("rollup-plugin-visualizer");
 var import_vite_plugin_circular_dependency = __toESM(require("vite-plugin-circular-dependency"), 1);
 var import_vite_plugin_legacy_extends = __toESM(require("vite-plugin-legacy-extends"), 1);
 var import_vite_svg_loader = __toESM(require("vite-svg-loader"), 1);
+var import_vite_plugun_css_modules_dts = __toESM(require("@luban-ui/vite-plugun-css-modules-dts"), 1);
 
 // src/utils/createClassNameHash.ts
 var import_node_path = __toESM(require("path"), 1);
@@ -564,144 +565,16 @@ function createClassNamehash(args) {
   return prefix ? `${prefix}${cls}` : cls;
 }
 
-// src/plugins/cssModulesDtsPlugin.ts
-var import_node_process4 = __toESM(require("process"), 1);
-
-// src/utils/cssModulesDts.ts
-var import_node_path2 = __toESM(require("path"), 1);
-var import_node_process3 = __toESM(require("process"), 1);
-var import_node_url = require("url");
-var import_node_watch = __toESM(require("node-watch"), 1);
-var sass = __toESM(require("sass"), 1);
-var import_glob = require("glob");
-var import_minimatch = require("minimatch");
-var import_typed_css_modules = __toESM(require("typed-css-modules"), 1);
-var RealDtsCreator = import_typed_css_modules.default.default;
-var start = (opts = {}) => {
-  const {
-    root = import_node_process3.default.cwd(),
-    files = ["**/*.module.scss"],
-    generateAll = true,
-    alias = []
-  } = opts;
-  const creator = new RealDtsCreator({
-    rootDir: root,
-    namedExports: true,
-    camelCase: "none"
-  });
-  async function updateFile(f) {
-    try {
-      const out = await sass.compileAsync(f, {
-        importers: [
-          {
-            findFileUrl(url) {
-              for (const item of alias) {
-                if (typeof item.find === "string") {
-                  if (url.startsWith(item.find)) {
-                    const p = import_node_path2.default.join(
-                      item.replacement,
-                      url.substring(item.find.length)
-                    );
-                    const res = (0, import_node_url.pathToFileURL)(p);
-                    return res;
-                  }
-                }
-                if (item.find instanceof RegExp) {
-                  if (item.find.test(url)) {
-                    const p = url.replace(item.find, item.replacement);
-                    const res = (0, import_node_url.pathToFileURL)(p);
-                    return res;
-                  }
-                }
-              }
-              return null;
-            }
-          }
-        ]
-      });
-      const content = await creator.create(f, out.css, true);
-      return await content.writeFile(() => content.formatted || "");
-    } catch (e) {
-      console.log("[cssModulesDts Error]");
-      console.error(e);
-    }
-  }
-  try {
-    let watchers = [];
-    files.forEach((p) => {
-      if (generateAll) {
-        (0, import_glob.glob)(p, {
-          cwd: root
-        }).then((files2) => {
-          files2.forEach((f) => {
-            updateFile(import_node_path2.default.resolve(root, f));
-          });
-        });
-      }
-      const watcher = (0, import_node_watch.default)(
-        root,
-        {
-          recursive: true,
-          filter: (f) => (0, import_minimatch.minimatch)(f, p)
-        },
-        (evt, name) => {
-          if (evt === "update")
-            updateFile(name);
-        }
-      );
-      watcher.on("error", (e) => {
-        console.log("[cssModulesDts Error]");
-        console.log(e);
-      });
-      watchers.push(watcher);
-    });
-    const stop = () => {
-      watchers.forEach((watcher) => {
-        watcher.close();
-      });
-      watchers = [];
-    };
-    return stop;
-  } catch (e) {
-    console.log("[cssModulesDts Error]");
-    console.log(e);
-  }
-};
-
-// src/plugins/cssModulesDtsPlugin.ts
-var cssModulesDtsPlugin = (options = {}) => {
-  let root = "";
-  let alias = [];
-  let stop;
-  return {
-    name: "luban:css-moduless-dts",
-    configResolved: (conf) => {
-      root = conf.root;
-      alias = conf.resolve.alias;
-    },
-    buildStart: () => {
-      const started = !!import_node_process4.default.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED;
-      const { files = ["**/*.module.scss"] } = options;
-      stop = start({ root, files, generateAll: !started, alias });
-      import_node_process4.default.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED = "true";
-    },
-    buildEnd: () => {
-      stop?.();
-    }
-  };
-};
-var cssModulesDtsPlugin_default = cssModulesDtsPlugin;
-
 // src/plugins/envDtsPlugin.ts
-var import_node_path4 = __toESM(require("path"), 1);
+var import_node_path3 = __toESM(require("path"), 1);
 
 // src/utils/envDts.ts
-var import_node_path3 = __toESM(require("path"), 1);
+var import_node_path2 = __toESM(require("path"), 1);
 var fs = __toESM(require("fs"), 1);
-var import_node_watch2 = __toESM(require("node-watch"), 1);
+var import_node_watch = __toESM(require("node-watch"), 1);
 var import_dotenv = __toESM(require("dotenv"), 1);
-var import_minimatch2 = require("minimatch");
-var start2 = (opts) => {
+var import_minimatch = require("minimatch");
+var start = (opts) => {
   const { envDir, filename, name } = opts;
   const generate2 = async () => {
     const dirs = await fs.promises.readdir(envDir);
@@ -709,7 +582,7 @@ var start2 = (opts) => {
 `;
     const readList = [];
     for (const dir of dirs) {
-      const f = import_node_path3.default.join(envDir, dir);
+      const f = import_node_path2.default.join(envDir, dir);
       const text = await fs.promises.readFile(f, "utf-8");
       const parsed = import_dotenv.default.parse(text);
       Object.keys(parsed).forEach((key) => {
@@ -729,11 +602,11 @@ var start2 = (opts) => {
   }
   try {
     let watchers = [];
-    const watcher = (0, import_node_watch2.default)(
-      import_node_path3.default.join(envDir),
+    const watcher = (0, import_node_watch.default)(
+      import_node_path2.default.join(envDir),
       {
         recursive: true,
-        filter: (f) => (0, import_minimatch2.minimatch)(f, "*.env*")
+        filter: (f) => (0, import_minimatch.minimatch)(f, "*.env*")
       },
       (evt, _) => {
         if (evt === "update") {
@@ -773,8 +646,8 @@ var envDtsPlugin = (options = {}) => {
       envDir = conf.envDir;
     },
     buildStart: () => {
-      const f = filename || import_node_path4.default.resolve(root, "custom-env.d.ts");
-      stop = start2({ envDir, filename: f, name });
+      const f = filename || import_node_path3.default.resolve(root, "custom-env.d.ts");
+      stop = start({ envDir, filename: f, name });
     },
     buildEnd: () => {
       stop?.();
@@ -784,11 +657,11 @@ var envDtsPlugin = (options = {}) => {
 var envDtsPlugin_default = envDtsPlugin;
 
 // src/plugins/sitemapPlugin.ts
-var import_node_process5 = __toESM(require("process"), 1);
-var import_node_path6 = __toESM(require("path"), 1);
+var import_node_process3 = __toESM(require("process"), 1);
+var import_node_path5 = __toESM(require("path"), 1);
 
 // src/utils/sitemap/sitemap.ts
-var import_node_path5 = __toESM(require("path"), 1);
+var import_node_path4 = __toESM(require("path"), 1);
 var import_node_fs = __toESM(require("fs"), 1);
 var import_ejs = __toESM(require("ejs"), 1);
 
@@ -816,12 +689,12 @@ var getUrl = (opts) => {
     page,
     lang,
     getLanguagePath = (p2, l) => {
-      return import_node_path5.default.join("/", l, p2);
+      return import_node_path4.default.join("/", l, p2);
     }
   } = opts;
   const defaultLang = page.defaultLanguage || opts.defaultLanguage;
   const pathWithLang = lang && lang !== defaultLang;
-  const p = pathWithLang ? getLanguagePath(page.path, lang) : import_node_path5.default.join("/", page.path);
+  const p = pathWithLang ? getLanguagePath(page.path, lang) : import_node_path4.default.join("/", page.path);
   return `https://${domain}${p}`;
 };
 var generateDomain = async (opts) => {
@@ -892,7 +765,7 @@ var sitemapPlugin = (options) => {
       root = conf.root;
     },
     buildStart: () => {
-      const started = !!import_node_process5.default.env.LUBAN_SITEMAP_PLUGIN_STARTED;
+      const started = !!import_node_process3.default.env.LUBAN_SITEMAP_PLUGIN_STARTED;
       if (started) {
         return;
       }
@@ -904,12 +777,12 @@ var sitemapPlugin = (options) => {
         getLanguagePath: options.getLanguagePath,
         filename: (d) => {
           if (options.domains.length > 1) {
-            return import_node_path6.default.resolve(root, `${d}.sitemap.xml`);
+            return import_node_path5.default.resolve(root, `${d}.sitemap.xml`);
           }
-          return import_node_path6.default.resolve(root, `sitemap.xml`);
+          return import_node_path5.default.resolve(root, `sitemap.xml`);
         }
       });
-      import_node_process5.default.env.LUBAN_SITEMAP_PLUGIN_STARTED = "true";
+      import_node_process3.default.env.LUBAN_SITEMAP_PLUGIN_STARTED = "true";
     },
     buildEnd: () => {
       stop?.();
@@ -936,27 +809,27 @@ var legacyTargets = [
   "android >= 7.1"
 ];
 function viteLubanVuePlugin(opts = {}) {
-  const root = opts.root ?? process6.cwd();
+  const root = opts.root ?? process4.cwd();
   const normalizePaths = (p) => {
     if (Array.isArray(p)) {
       return p.map((v) => {
         return normalizePaths(v);
       });
     }
-    if (path7.isAbsolute(p))
+    if (path6.isAbsolute(p))
       return p;
-    return path7.resolve(root, p);
+    return path6.resolve(root, p);
   };
   const lubanConfigPlugin = {
     name: "luban:config",
     async config(config, { mode }) {
-      const confRoot = config.root || process6.cwd();
+      const confRoot = config.root || process4.cwd();
       const envPrefixSet = new Set(config.envPrefix ?? []);
       ["VITE_", "NODE_", "__VUE_", "__INTLIFY_"].forEach((v) => {
         envPrefixSet.add(v);
       });
       const envPrefix = [...envPrefixSet];
-      const envDir = config.envDir ?? path7.resolve(confRoot, "./envs");
+      const envDir = config.envDir ?? path6.resolve(confRoot, "./envs");
       const env2 = (0, import_vite.loadEnv)(mode, envDir, envPrefix);
       const base = config.base || "/";
       return {
@@ -1013,7 +886,7 @@ function viteLubanVuePlugin(opts = {}) {
         },
         experimental: {
           renderBuiltUrl(filename) {
-            const ext = path7.extname(filename);
+            const ext = path6.extname(filename);
             const cndUrl = (opts.cdn?.url || "").replace(/\/$/, "");
             const pattern = opts.cdn?.assetsPattern || /\.(js|css|jpg|jpeg|png|gif|ico|svg|eot|woff|woff2|ttf|swf|mp3|mp4|wov|avi|flv|ogg|mpeg4|webm)$/;
             if (pattern.test(ext) && cndUrl) {
@@ -1036,7 +909,7 @@ function viteLubanVuePlugin(opts = {}) {
   ];
   if (opts.cssModulesDts?.enable !== false) {
     plugins.push(
-      cssModulesDtsPlugin_default(opts.cssModulesDts?.options)
+      (0, import_vite_plugun_css_modules_dts.default)(opts.cssModulesDts?.options)
     );
   }
   if (opts.envDts?.enable !== false) {

@@ -6,10 +6,7 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import circularDependency from 'vite-plugin-circular-dependency';
 import legacy from 'vite-plugin-legacy-extends';
 import svgLoader from 'vite-svg-loader';
-
-interface CssModulesDtsPluginOptions {
-    files?: string[];
-}
+import { Options as Options$1 } from '@luban-ui/vite-plugun-css-modules-dts';
 
 interface EnvDtsPluginOptions {
     filename?: string;
@@ -70,7 +67,7 @@ interface PluginOptions {
     };
     cssModulesDts?: {
         enable?: boolean;
-        options?: CssModulesDtsPluginOptions;
+        options?: Options$1;
     };
     envDts?: {
         enable?: boolean;

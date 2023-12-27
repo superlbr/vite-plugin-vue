@@ -120,17 +120,21 @@ export interface PluginOption {
     enable?: boolean;
   };
 
-  split?: {
-    // default: true
-    enable?: boolean;
-  };
-
+  // @luban-ui/vite-plugun-css-modules-dts
+  // https://github.com/luban-dev/vite-plugun-css-modules-dts
   cssModulesDts?: {
     // default: true
     enable?: boolean;
     options?: {
-      files?: string[];
+      // **/*.module.scss
+      files: string[];
+      namedExports: boolean;
     };
+  };
+
+  split?: {
+    // default: true
+    enable?: boolean;
   };
 
   envDts?: {
