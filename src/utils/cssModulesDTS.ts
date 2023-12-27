@@ -1,5 +1,6 @@
 import path from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 import type { Watcher } from 'node-watch';
 import watch from 'node-watch';
 import * as sass from 'sass';
@@ -9,8 +10,16 @@ import DtsCreator from 'typed-css-modules';
 
 const RealDtsCreator = (DtsCreator as any).default;
 
-export const start = (opts: { root?: string; files?: string[]; generateAll?: boolean } = {}) => {
-  const { root = process.cwd(), files = ['**/*.module.scss'], generateAll = true } = opts;
+export const start = (opts: { root?: string; files?: string[]; generateAll?: boolean; alias?: {
+  find: string | RegExp;
+  replacement: string;
+}[]; } = {}) => {
+  const {
+    root = process.cwd(),
+    files = ['**/*.module.scss'],
+    generateAll = true,
+    alias = []
+  } = opts;
   const creator = new RealDtsCreator({
     rootDir: root,
     namedExports: true,
@@ -23,11 +32,27 @@ export const start = (opts: { root?: string; files?: string[]; generateAll?: boo
         importers: [
           {
             findFileUrl(url) {
-              if (!url.startsWith('@'))
-                return null;
-              const p = path.resolve(__dirname, '../src/', url.substring(2));
-              const res = new URL(`file://${p}`);
-              return res;
+              for (const item of alias) {
+                if (typeof item.find === 'string') {
+                  if (url.startsWith(item.find)) {
+                    const p = path.join(
+                      item.replacement,
+                      url.substring(item.find.length)
+                    );
+                    const res = pathToFileURL(p) as URL;
+                    return res;
+                  }
+                }
+                if (item.find instanceof RegExp) {
+                  if (item.find.test(url)) {
+                    const p = url.replace(item.find, item.replacement);
+                    const res = pathToFileURL(p) as URL;
+                    return res;
+                  }
+                }
+              }
+
+              return null;
             }
           }
         ]

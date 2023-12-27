@@ -570,6 +570,7 @@ var import_node_process4 = __toESM(require("process"), 1);
 // src/utils/cssModulesDts.ts
 var import_node_path2 = __toESM(require("path"), 1);
 var import_node_process3 = __toESM(require("process"), 1);
+var import_node_url = require("url");
 var import_node_watch = __toESM(require("node-watch"), 1);
 var sass = __toESM(require("sass"), 1);
 var import_glob = require("glob");
@@ -577,7 +578,12 @@ var import_minimatch = require("minimatch");
 var import_typed_css_modules = __toESM(require("typed-css-modules"), 1);
 var RealDtsCreator = import_typed_css_modules.default.default;
 var start = (opts = {}) => {
-  const { root = import_node_process3.default.cwd(), files = ["**/*.module.scss"], generateAll = true } = opts;
+  const {
+    root = import_node_process3.default.cwd(),
+    files = ["**/*.module.scss"],
+    generateAll = true,
+    alias = []
+  } = opts;
   const creator = new RealDtsCreator({
     rootDir: root,
     namedExports: true,
@@ -589,11 +595,26 @@ var start = (opts = {}) => {
         importers: [
           {
             findFileUrl(url) {
-              if (!url.startsWith("@"))
-                return null;
-              const p = import_node_path2.default.resolve(__dirname, "../src/", url.substring(2));
-              const res = new URL(`file://${p}`);
-              return res;
+              for (const item of alias) {
+                if (typeof item.find === "string") {
+                  if (url.startsWith(item.find)) {
+                    const p = import_node_path2.default.join(
+                      item.replacement,
+                      url.substring(item.find.length)
+                    );
+                    const res = (0, import_node_url.pathToFileURL)(p);
+                    return res;
+                  }
+                }
+                if (item.find instanceof RegExp) {
+                  if (item.find.test(url)) {
+                    const p = url.replace(item.find, item.replacement);
+                    const res = (0, import_node_url.pathToFileURL)(p);
+                    return res;
+                  }
+                }
+              }
+              return null;
             }
           }
         ]
@@ -650,16 +671,18 @@ var start = (opts = {}) => {
 // src/plugins/cssModulesDtsPlugin.ts
 var cssModulesDtsPlugin = (options = {}) => {
   let root = "";
+  let alias = [];
   let stop;
   return {
     name: "luban:css-moduless-dts",
     configResolved: (conf) => {
       root = conf.root;
+      alias = conf.resolve.alias;
     },
     buildStart: () => {
       const started = !!import_node_process4.default.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED;
       const { files = ["**/*.module.scss"] } = options;
-      stop = start({ root, files, generateAll: !started });
+      stop = start({ root, files, generateAll: !started, alias });
       import_node_process4.default.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED = "true";
     },
     buildEnd: () => {

@@ -8,17 +8,19 @@ export interface CssModulesDtsPluginOptions {
 
 const cssModulesDtsPlugin = (options: CssModulesDtsPluginOptions = {}): Plugin => {
   let root = '';
+  let alias: any[] = [];
   let stop: (() => void) | undefined;
 
   return {
     name: 'luban:css-moduless-dts',
     configResolved: (conf) => {
       root = conf.root;
+      alias = conf.resolve.alias;
     },
     buildStart: () => {
       const started = !!process.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED;
       const { files = ['**/*.module.scss'] } = options;
-      stop = start({ root, files, generateAll: !started });
+      stop = start({ root, files, generateAll: !started, alias });
       process.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED = 'true';
     },
     buildEnd: () => {

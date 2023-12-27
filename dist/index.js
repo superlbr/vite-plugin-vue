@@ -1,12 +1,5 @@
-// node_modules/tsup/assets/esm_shims.js
-import { fileURLToPath } from "url";
-import path from "path";
-var getFilename = () => fileURLToPath(import.meta.url);
-var getDirname = () => path.dirname(getFilename());
-var __dirname = /* @__PURE__ */ getDirname();
-
 // src/index.ts
-import * as path8 from "path";
+import * as path7 from "path";
 import * as process6 from "process";
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
@@ -510,7 +503,7 @@ import legacy from "vite-plugin-legacy-extends";
 import svgLoader from "vite-svg-loader";
 
 // src/utils/createClassNameHash.ts
-import path2 from "path";
+import path from "path";
 import crypto from "crypto";
 import process2 from "process";
 var hashMap = {};
@@ -528,9 +521,9 @@ function getUniqueName(content, p) {
 }
 function createClassNamehash(args) {
   const { root, name, filename, prefix, classCompress = true } = args;
-  const p = `${path2.relative(root, filename).replace(/\\/g, "/")}--${name}`;
-  const basename = path2.basename(filename).replace(/(\.module)?\.(css|less|scss)/, "").replace(/\./g, "_");
-  const dirname = path2.basename(path2.dirname(filename));
+  const p = `${path.relative(root, filename).replace(/\\/g, "/")}--${name}`;
+  const basename = path.basename(filename).replace(/(\.module)?\.(css|less|scss)/, "").replace(/\./g, "_");
+  const dirname = path.basename(path.dirname(filename));
   const content = `${prefix}:${p}`;
   const hash = getUniqueName(content, p);
   const cls = process2.env.NODE_ENV === "development" || !classCompress ? `${dirname}_${basename}_${name}__${hash}` : `${hash}`;
@@ -541,8 +534,9 @@ function createClassNamehash(args) {
 import process4 from "process";
 
 // src/utils/cssModulesDts.ts
-import path3 from "path";
+import path2 from "path";
 import process3 from "process";
+import { pathToFileURL } from "url";
 import watch from "node-watch";
 import * as sass from "sass";
 import { glob } from "glob";
@@ -550,7 +544,12 @@ import { minimatch } from "minimatch";
 import DtsCreator from "typed-css-modules";
 var RealDtsCreator = DtsCreator.default;
 var start = (opts = {}) => {
-  const { root = process3.cwd(), files = ["**/*.module.scss"], generateAll = true } = opts;
+  const {
+    root = process3.cwd(),
+    files = ["**/*.module.scss"],
+    generateAll = true,
+    alias = []
+  } = opts;
   const creator = new RealDtsCreator({
     rootDir: root,
     namedExports: true,
@@ -562,11 +561,26 @@ var start = (opts = {}) => {
         importers: [
           {
             findFileUrl(url) {
-              if (!url.startsWith("@"))
-                return null;
-              const p = path3.resolve(__dirname, "../src/", url.substring(2));
-              const res = new URL(`file://${p}`);
-              return res;
+              for (const item of alias) {
+                if (typeof item.find === "string") {
+                  if (url.startsWith(item.find)) {
+                    const p = path2.join(
+                      item.replacement,
+                      url.substring(item.find.length)
+                    );
+                    const res = pathToFileURL(p);
+                    return res;
+                  }
+                }
+                if (item.find instanceof RegExp) {
+                  if (item.find.test(url)) {
+                    const p = url.replace(item.find, item.replacement);
+                    const res = pathToFileURL(p);
+                    return res;
+                  }
+                }
+              }
+              return null;
             }
           }
         ]
@@ -586,7 +600,7 @@ var start = (opts = {}) => {
           cwd: root
         }).then((files2) => {
           files2.forEach((f) => {
-            updateFile(path3.resolve(root, f));
+            updateFile(path2.resolve(root, f));
           });
         });
       }
@@ -623,16 +637,18 @@ var start = (opts = {}) => {
 // src/plugins/cssModulesDtsPlugin.ts
 var cssModulesDtsPlugin = (options = {}) => {
   let root = "";
+  let alias = [];
   let stop;
   return {
     name: "luban:css-moduless-dts",
     configResolved: (conf) => {
       root = conf.root;
+      alias = conf.resolve.alias;
     },
     buildStart: () => {
       const started = !!process4.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED;
       const { files = ["**/*.module.scss"] } = options;
-      stop = start({ root, files, generateAll: !started });
+      stop = start({ root, files, generateAll: !started, alias });
       process4.env.LUBAN_CSS_MODULES_DTS_PLUGIN_STARTED = "true";
     },
     buildEnd: () => {
@@ -643,10 +659,10 @@ var cssModulesDtsPlugin = (options = {}) => {
 var cssModulesDtsPlugin_default = cssModulesDtsPlugin;
 
 // src/plugins/envDtsPlugin.ts
-import path5 from "path";
+import path4 from "path";
 
 // src/utils/envDts.ts
-import path4 from "path";
+import path3 from "path";
 import * as fs from "fs";
 import watch2 from "node-watch";
 import dotenv from "dotenv";
@@ -659,7 +675,7 @@ var start2 = (opts) => {
 `;
     const readList = [];
     for (const dir of dirs) {
-      const f = path4.join(envDir, dir);
+      const f = path3.join(envDir, dir);
       const text = await fs.promises.readFile(f, "utf-8");
       const parsed = dotenv.parse(text);
       Object.keys(parsed).forEach((key) => {
@@ -680,7 +696,7 @@ var start2 = (opts) => {
   try {
     let watchers = [];
     const watcher = watch2(
-      path4.join(envDir),
+      path3.join(envDir),
       {
         recursive: true,
         filter: (f) => minimatch2(f, "*.env*")
@@ -723,7 +739,7 @@ var envDtsPlugin = (options = {}) => {
       envDir = conf.envDir;
     },
     buildStart: () => {
-      const f = filename || path5.resolve(root, "custom-env.d.ts");
+      const f = filename || path4.resolve(root, "custom-env.d.ts");
       stop = start2({ envDir, filename: f, name });
     },
     buildEnd: () => {
@@ -735,10 +751,10 @@ var envDtsPlugin_default = envDtsPlugin;
 
 // src/plugins/sitemapPlugin.ts
 import process5 from "process";
-import path7 from "path";
+import path6 from "path";
 
 // src/utils/sitemap/sitemap.ts
-import path6 from "path";
+import path5 from "path";
 import fs2 from "fs";
 import ejs from "ejs";
 
@@ -766,12 +782,12 @@ var getUrl = (opts) => {
     page,
     lang,
     getLanguagePath = (p2, l) => {
-      return path6.join("/", l, p2);
+      return path5.join("/", l, p2);
     }
   } = opts;
   const defaultLang = page.defaultLanguage || opts.defaultLanguage;
   const pathWithLang = lang && lang !== defaultLang;
-  const p = pathWithLang ? getLanguagePath(page.path, lang) : path6.join("/", page.path);
+  const p = pathWithLang ? getLanguagePath(page.path, lang) : path5.join("/", page.path);
   return `https://${domain}${p}`;
 };
 var generateDomain = async (opts) => {
@@ -854,9 +870,9 @@ var sitemapPlugin = (options) => {
         getLanguagePath: options.getLanguagePath,
         filename: (d) => {
           if (options.domains.length > 1) {
-            return path7.resolve(root, `${d}.sitemap.xml`);
+            return path6.resolve(root, `${d}.sitemap.xml`);
           }
-          return path7.resolve(root, `sitemap.xml`);
+          return path6.resolve(root, `sitemap.xml`);
         }
       });
       process5.env.LUBAN_SITEMAP_PLUGIN_STARTED = "true";
@@ -893,9 +909,9 @@ function viteLubanVuePlugin(opts = {}) {
         return normalizePaths(v);
       });
     }
-    if (path8.isAbsolute(p))
+    if (path7.isAbsolute(p))
       return p;
-    return path8.resolve(root, p);
+    return path7.resolve(root, p);
   };
   const lubanConfigPlugin = {
     name: "luban:config",
@@ -906,7 +922,7 @@ function viteLubanVuePlugin(opts = {}) {
         envPrefixSet.add(v);
       });
       const envPrefix = [...envPrefixSet];
-      const envDir = config.envDir ?? path8.resolve(confRoot, "./envs");
+      const envDir = config.envDir ?? path7.resolve(confRoot, "./envs");
       const env2 = loadEnv(mode, envDir, envPrefix);
       const base = config.base || "/";
       return {
@@ -963,7 +979,7 @@ function viteLubanVuePlugin(opts = {}) {
         },
         experimental: {
           renderBuiltUrl(filename) {
-            const ext = path8.extname(filename);
+            const ext = path7.extname(filename);
             const cndUrl = (opts.cdn?.url || "").replace(/\/$/, "");
             const pattern = opts.cdn?.assetsPattern || /\.(js|css|jpg|jpeg|png|gif|ico|svg|eot|woff|woff2|ttf|swf|mp3|mp4|wov|avi|flv|ogg|mpeg4|webm)$/;
             if (pattern.test(ext) && cndUrl) {

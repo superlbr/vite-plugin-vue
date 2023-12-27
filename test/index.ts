@@ -1,2 +1,3 @@
-console.log('test');
- 
+import * as S from './styles/test.module.scss';
+
+console.log(S);
