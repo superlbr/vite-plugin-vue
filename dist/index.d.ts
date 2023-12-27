@@ -7,27 +7,8 @@ import circularDependency from 'vite-plugin-circular-dependency';
 import legacy from 'vite-plugin-legacy-extends';
 import svgLoader from 'vite-svg-loader';
 import { Options as Options$1 } from '@luban-ui/vite-plugun-css-modules-dts';
-
-interface EnvDtsPluginOptions {
-    filename?: string;
-    name?: string;
-}
-
-interface Page {
-    path: string;
-    languages?: string[];
-    defaultLanguage?: string;
-    priority?: number;
-}
-
-interface SitemapPluginOptions {
-    domains: string[];
-    pages: Page[];
-    languages: string[];
-    defaultLanguage?: string;
-    getLanguagePath?: (page: string, lang: string) => string;
-    filename?: (domain: string) => string;
-}
+import { Options as Options$2 } from '@luban-ui/vite-plugun-env-dts';
+import { Options as Options$3 } from '@luban-ui/vite-plugun-sitemap';
 
 interface PluginOptions {
     root?: string;
@@ -71,11 +52,11 @@ interface PluginOptions {
     };
     envDts?: {
         enable?: boolean;
-        options?: EnvDtsPluginOptions;
+        options?: Options$2;
     };
     sitemap?: {
         enable?: boolean;
-        options?: SitemapPluginOptions;
+        options?: Options$3;
     };
     cdn?: {
         url?: string;

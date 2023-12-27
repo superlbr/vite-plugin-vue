@@ -132,11 +132,8 @@ export interface PluginOption {
     };
   };
 
-  split?: {
-    // default: true
-    enable?: boolean;
-  };
-
+  // @luban-ui/vite-plugun-env-dts
+  // https://github.com/luban-dev/vite-plugun-env-dts
   envDts?: {
     // default: true
     enable?: boolean;
@@ -146,6 +143,8 @@ export interface PluginOption {
     };
   };
 
+  // @luban-ui/vite-plugun-sitemap
+  // https://github.com/luban-dev/vite-plugun-sitemap
   sitemap?: {
     // default: false
     enable?: boolean;
@@ -162,6 +161,11 @@ export interface PluginOption {
       getLanguagePath?: (page: string, lang: string) => string;
       filename?: (domain: string) => string;
     };
+  };
+
+  split?: {
+    // default: true
+    enable?: boolean;
   };
 
   cdn?: {

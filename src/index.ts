@@ -15,11 +15,11 @@ import legacy from 'vite-plugin-legacy-extends';
 import svgLoader from 'vite-svg-loader';
 import type { Options as CssModulesDtsOptions } from '@luban-ui/vite-plugun-css-modules-dts';
 import cssModulesDts from '@luban-ui/vite-plugun-css-modules-dts';
+import type { Options as EnvDtsPluginOptions } from '@luban-ui/vite-plugun-env-dts';
+import envDtsPlugin from '@luban-ui/vite-plugun-env-dts';
+import type { Options as SitemapPluginOptions } from '@luban-ui/vite-plugun-sitemap';
+import sitemapPlugin from '@luban-ui/vite-plugun-sitemap';
 import { createClassNamehash } from '@/utils/createClassNameHash';
-import type { EnvDtsPluginOptions } from '@/plugins/envDtsPlugin';
-import envDtsPlugin from '@/plugins/envDtsPlugin';
-import type { SitemapPluginOptions } from '@/plugins/sitemapPlugin';
-import sitemapPlugin from '@/plugins/sitemapPlugin';
 
 // build targets
 const esTargets = ['es2015', 'chrome87', 'safari13', 'firefox78', 'edge88'];

@@ -1,6 +1,6 @@
 // src/index.ts
-import * as path6 from "path";
-import * as process4 from "process";
+import * as path2 from "path";
+import * as process3 from "process";
 
 // node_modules/chalk/source/vendor/ansi-styles/index.js
 var ANSI_BACKGROUND_OFFSET = 10;
@@ -502,6 +502,8 @@ import circularDependency from "vite-plugin-circular-dependency";
 import legacy from "vite-plugin-legacy-extends";
 import svgLoader from "vite-svg-loader";
 import cssModulesDts from "@luban-ui/vite-plugun-css-modules-dts";
+import envDtsPlugin from "@luban-ui/vite-plugun-env-dts";
+import sitemapPlugin from "@luban-ui/vite-plugun-sitemap";
 
 // src/utils/createClassNameHash.ts
 import path from "path";
@@ -531,232 +533,6 @@ function createClassNamehash(args) {
   return prefix ? `${prefix}${cls}` : cls;
 }
 
-// src/plugins/envDtsPlugin.ts
-import path3 from "path";
-
-// src/utils/envDts.ts
-import path2 from "path";
-import * as fs from "fs";
-import watch from "node-watch";
-import dotenv from "dotenv";
-import { minimatch } from "minimatch";
-var start = (opts) => {
-  const { envDir, filename, name } = opts;
-  const generate2 = async () => {
-    const dirs = await fs.promises.readdir(envDir);
-    let str = `interface ${name} {
-`;
-    const readList = [];
-    for (const dir of dirs) {
-      const f = path2.join(envDir, dir);
-      const text = await fs.promises.readFile(f, "utf-8");
-      const parsed = dotenv.parse(text);
-      Object.keys(parsed).forEach((key) => {
-        if (readList.includes(key))
-          return;
-        readList.push(key);
-        str += `  readonly ${key}: string;
-`;
-      });
-    }
-    str += "}\n";
-    await fs.promises.writeFile(filename, str);
-  };
-  if (!fs.existsSync(envDir)) {
-    console.log(`[envDts] envDir not exists!`);
-    return;
-  }
-  try {
-    let watchers = [];
-    const watcher = watch(
-      path2.join(envDir),
-      {
-        recursive: true,
-        filter: (f) => minimatch(f, "*.env*")
-      },
-      (evt, _) => {
-        if (evt === "update") {
-          generate2();
-        }
-      }
-    );
-    watcher.on("error", (e) => {
-      console.log("[envDts Error]");
-      console.log(e);
-    });
-    watchers.push(watcher);
-    generate2();
-    const stop = () => {
-      watchers.forEach((watcher2) => {
-        watcher2.close();
-      });
-      watchers = [];
-    };
-    return stop;
-  } catch (e) {
-    console.log(`[envDts Error]`);
-    console.log(e);
-  }
-};
-
-// src/plugins/envDtsPlugin.ts
-var envDtsPlugin = (options = {}) => {
-  const { name = "CustomProcessEnv", filename } = options;
-  let root = "";
-  let envDir = "";
-  let stop;
-  return {
-    name: "luban:env-dts",
-    configResolved: (conf) => {
-      root = conf.root;
-      envDir = conf.envDir;
-    },
-    buildStart: () => {
-      const f = filename || path3.resolve(root, "custom-env.d.ts");
-      stop = start({ envDir, filename: f, name });
-    },
-    buildEnd: () => {
-      stop?.();
-    }
-  };
-};
-var envDtsPlugin_default = envDtsPlugin;
-
-// src/plugins/sitemapPlugin.ts
-import process3 from "process";
-import path5 from "path";
-
-// src/utils/sitemap/sitemap.ts
-import path4 from "path";
-import fs2 from "fs";
-import ejs from "ejs";
-
-// src/utils/sitemap/template.ts
-var template_default = `
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  <% urls.forEach(function(url){ %>
-  <url>
-    <loc><%= url.loc %></loc>
-    <% url.alternates.forEach(function(alternate){ %>
-    <xhtml:link rel="alternate" hreflang="<%= alternate.lang %>" href="<%= alternate.link %>" />
-    <% }); %>   
-    <priority><%= \`\${url.priority || 1.0}\` %></priority>
-  </url>
-  <% }); %>
-</urlset>
-`;
-
-// src/utils/sitemap/sitemap.ts
-var getUrl = (opts) => {
-  const {
-    domain,
-    page,
-    lang,
-    getLanguagePath = (p2, l) => {
-      return path4.join("/", l, p2);
-    }
-  } = opts;
-  const defaultLang = page.defaultLanguage || opts.defaultLanguage;
-  const pathWithLang = lang && lang !== defaultLang;
-  const p = pathWithLang ? getLanguagePath(page.path, lang) : path4.join("/", page.path);
-  return `https://${domain}${p}`;
-};
-var generateDomain = async (opts) => {
-  const { domain, languages, defaultLanguage, pages, getLanguagePath, filename } = opts;
-  const generatePage = (page) => {
-    const langs = page.languages || languages;
-    const generateLang = (lang) => {
-      const loc = getUrl({
-        domain,
-        page,
-        lang,
-        defaultLanguage,
-        getLanguagePath
-      });
-      const alternates = [];
-      for (const item of langs) {
-        alternates.push({
-          lang: item,
-          link: getUrl({
-            domain,
-            page,
-            lang: item,
-            defaultLanguage,
-            getLanguagePath
-          })
-        });
-      }
-      return {
-        loc,
-        priority: page.priority,
-        alternates
-      };
-    };
-    const res2 = [];
-    for (const item of langs.length ? langs : [""]) {
-      res2.push(generateLang(item));
-    }
-    return res2;
-  };
-  const res = [];
-  for (const item of pages) {
-    res.push(...generatePage(item));
-  }
-  const file = filename(domain);
-  const content = ejs.render(template_default, { urls: res }).replace(/\n[\r\n\s]+\n/g, "\n").replace(/(^\s+)|(\s+$)/g, "");
-  await fs2.promises.writeFile(file, content, "utf-8");
-};
-var generate = async (options) => {
-  for (const d of options.domains) {
-    await generateDomain({
-      domain: d,
-      pages: options.pages,
-      languages: options.languages,
-      defaultLanguage: options.defaultLanguage,
-      getLanguagePath: options.getLanguagePath,
-      filename: options.filename
-    });
-  }
-};
-
-// src/plugins/sitemapPlugin.ts
-var sitemapPlugin = (options) => {
-  let root = "";
-  let stop;
-  return {
-    name: "luban:sitemap",
-    configResolved: (conf) => {
-      root = conf.root;
-    },
-    buildStart: () => {
-      const started = !!process3.env.LUBAN_SITEMAP_PLUGIN_STARTED;
-      if (started) {
-        return;
-      }
-      generate({
-        domains: options.domains,
-        pages: options.pages,
-        languages: options.languages,
-        defaultLanguage: options.defaultLanguage,
-        getLanguagePath: options.getLanguagePath,
-        filename: (d) => {
-          if (options.domains.length > 1) {
-            return path5.resolve(root, `${d}.sitemap.xml`);
-          }
-          return path5.resolve(root, `sitemap.xml`);
-        }
-      });
-      process3.env.LUBAN_SITEMAP_PLUGIN_STARTED = "true";
-    },
-    buildEnd: () => {
-      stop?.();
-    }
-  };
-};
-var sitemapPlugin_default = sitemapPlugin;
-
 // src/index.ts
 var esTargets = ["es2015", "chrome87", "safari13", "firefox78", "edge88"];
 var babelTargets = [
@@ -775,27 +551,27 @@ var legacyTargets = [
   "android >= 7.1"
 ];
 function viteLubanVuePlugin(opts = {}) {
-  const root = opts.root ?? process4.cwd();
+  const root = opts.root ?? process3.cwd();
   const normalizePaths = (p) => {
     if (Array.isArray(p)) {
       return p.map((v) => {
         return normalizePaths(v);
       });
     }
-    if (path6.isAbsolute(p))
+    if (path2.isAbsolute(p))
       return p;
-    return path6.resolve(root, p);
+    return path2.resolve(root, p);
   };
   const lubanConfigPlugin = {
     name: "luban:config",
     async config(config, { mode }) {
-      const confRoot = config.root || process4.cwd();
+      const confRoot = config.root || process3.cwd();
       const envPrefixSet = new Set(config.envPrefix ?? []);
       ["VITE_", "NODE_", "__VUE_", "__INTLIFY_"].forEach((v) => {
         envPrefixSet.add(v);
       });
       const envPrefix = [...envPrefixSet];
-      const envDir = config.envDir ?? path6.resolve(confRoot, "./envs");
+      const envDir = config.envDir ?? path2.resolve(confRoot, "./envs");
       const env2 = loadEnv(mode, envDir, envPrefix);
       const base = config.base || "/";
       return {
@@ -852,7 +628,7 @@ function viteLubanVuePlugin(opts = {}) {
         },
         experimental: {
           renderBuiltUrl(filename) {
-            const ext = path6.extname(filename);
+            const ext = path2.extname(filename);
             const cndUrl = (opts.cdn?.url || "").replace(/\/$/, "");
             const pattern = opts.cdn?.assetsPattern || /\.(js|css|jpg|jpeg|png|gif|ico|svg|eot|woff|woff2|ttf|swf|mp3|mp4|wov|avi|flv|ogg|mpeg4|webm)$/;
             if (pattern.test(ext) && cndUrl) {
@@ -880,12 +656,12 @@ function viteLubanVuePlugin(opts = {}) {
   }
   if (opts.envDts?.enable !== false) {
     plugins.push(
-      envDtsPlugin_default(opts.envDts?.options)
+      envDtsPlugin(opts.envDts?.options)
     );
   }
   if (opts.sitemap?.enable && opts.sitemap?.options) {
     plugins.push(
-      sitemapPlugin_default(opts.sitemap?.options)
+      sitemapPlugin(opts.sitemap?.options)
     );
   }
   if (opts.vue?.enable !== false)
