@@ -1,7 +1,7 @@
 {
   "name": "@luban-ui/vite-plugin-vue",
   "type": "module",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "homepage": "https://github.com/ccqgithub/vite-plugin-vue",
   "repository": "https://github.com/luban-dev/vite-plugin-vue",
   "exports": {
@@ -39,7 +39,7 @@
     "@intlify/unplugin-vue-i18n": "^2.0.0",
     "@luban-ui/vite-plugun-css-modules-dts": "^1.0.0",
     "@luban-ui/vite-plugun-env-dts": "^1.0.0",
-    "@luban-ui/vite-plugun-sitemap": "^1.0.0",
+    "@luban-ui/vite-plugun-sitemap": "^1.0.1",
     "@vitejs/plugin-basic-ssl": "^1.0.2",
     "@vitejs/plugin-vue": "^4.5.2",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
