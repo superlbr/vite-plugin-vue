@@ -22,6 +22,32 @@ export default defineConfig(() => {
   return {
     // default: process.cwd()
     root: process.cwd(),
+    // to esbuild
+    esTargets: [
+      'es2015',
+      'chrome87',
+      'safari13',
+      'firefox78',
+      'edge88'
+    ],
+    // moder targets
+    modernTargets: [
+      'defaults',
+      'chrome >= 87',
+      'safari >= 13',
+      'firefox >= 78',
+      'edge >= 88'
+    ],
+    // legacy plugin
+    legacyTargets: [
+      'defaults',
+      'chrome >= 87',
+      'safari >= 13',
+      'firefox >= 78',
+      'edge >= 88',
+      'android >= 7.1'
+    ],
+
     // default: {root}/envs/
     envDir: path.resolve(root, './envs'),
     // default: /

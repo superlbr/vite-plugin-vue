@@ -23,7 +23,13 @@ import sitemapPlugin from '@luban-ui/vite-plugun-sitemap';
 import { createClassNamehash } from '@/utils/createClassNameHash';
 
 // build targets
-const esTargetsDefault = ['es2015', 'chrome87', 'safari13', 'firefox78', 'edge88'];
+const esTargetsDefault = [
+  'es2015',
+  'chrome87',
+  'safari13',
+  'firefox78',
+  'edge88'
+];
 
 // modern targets
 const modernTargetsDefault = [
