@@ -535,6 +535,7 @@ var import_rollup_plugin_visualizer = require("rollup-plugin-visualizer");
 var import_vite_plugin_circular_dependency = __toESM(require("vite-plugin-circular-dependency"), 1);
 var import_vite_plugin_legacy_extends = __toESM(require("vite-plugin-legacy-extends"), 1);
 var import_vite_svg_loader = __toESM(require("vite-svg-loader"), 1);
+var import_autoprefixer = __toESM(require("autoprefixer"), 1);
 var import_vite_plugun_css_modules_dts = __toESM(require("@luban-ui/vite-plugun-css-modules-dts"), 1);
 var import_vite_plugun_env_dts = __toESM(require("@luban-ui/vite-plugun-env-dts"), 1);
 var import_vite_plugun_sitemap = __toESM(require("@luban-ui/vite-plugun-sitemap"), 1);
@@ -568,15 +569,15 @@ function createClassNamehash(args) {
 }
 
 // src/index.ts
-var esTargets = ["es2015", "chrome87", "safari13", "firefox78", "edge88"];
-var babelTargets = [
+var esTargetsDefault = ["es2015", "chrome87", "safari13", "firefox78", "edge88"];
+var modernTargetsDefault = [
   "defaults",
   "chrome >= 87",
   "safari >= 13",
   "firefox >= 78",
   "edge >= 88"
 ];
-var legacyTargets = [
+var legacyTargetsDefault = [
   "defaults",
   "chrome >= 87",
   "safari >= 13",
@@ -586,6 +587,11 @@ var legacyTargets = [
 ];
 function viteLubanVuePlugin(opts = {}) {
   const root = opts.root ?? process3.cwd();
+  const {
+    esTargets = esTargetsDefault,
+    modernTargets = modernTargetsDefault,
+    legacyTargets = legacyTargetsDefault
+  } = opts;
   const normalizePaths = (p) => {
     if (Array.isArray(p)) {
       return p.map((v) => {
@@ -617,7 +623,8 @@ function viteLubanVuePlugin(opts = {}) {
           __VUE_PROD_DEVTOOLS__: env2["process.env.NODE_ENV"] === "development",
           __VUE_I18N_LEGACY_API_: false,
           __VUE_I18N_FULL_INSTALL__: false,
-          __INTLIFY_PROD_DEVTOOLS__: false
+          __INTLIFY_PROD_DEVTOOLS__: false,
+          ...config.define
         },
         resolve: {
           alias: {
@@ -638,6 +645,15 @@ function viteLubanVuePlugin(opts = {}) {
                 classCompress: true
               });
             }
+          },
+          postcss: {
+            plugins: [
+              (0, import_autoprefixer.default)({
+                overrideBrowserslist: [
+                  ...legacyTargetsDefault
+                ]
+              })
+            ]
           }
         },
         build: {
@@ -715,6 +731,7 @@ function viteLubanVuePlugin(opts = {}) {
     plugins.push(
       (0, import_vite_svg_loader.default)({
         defaultImport: "url",
+        svgo: false,
         ...opts.svg?.options
       })
     );
@@ -753,7 +770,7 @@ function viteLubanVuePlugin(opts = {}) {
       (0, import_vite_plugin_legacy_extends.default)({
         targets: legacyTargets,
         modernPolyfills: true,
-        modernTargets: babelTargets,
+        modernTargets,
         ...opts.legacy?.options
       })
     );

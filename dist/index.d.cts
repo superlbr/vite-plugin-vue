@@ -12,6 +12,9 @@ import { Options as Options$3 } from '@luban-ui/vite-plugun-sitemap';
 
 interface PluginOptions {
     root?: string;
+    esTargets?: string[];
+    modernTargets?: string[];
+    legacyTargets?: string[];
     vue?: {
         enable?: boolean;
         options?: Options;

@@ -13,6 +13,7 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import circularDependency from 'vite-plugin-circular-dependency';
 import legacy from 'vite-plugin-legacy-extends';
 import svgLoader from 'vite-svg-loader';
+import autoprefixer from 'autoprefixer';
 import type { Options as CssModulesDtsOptions } from '@luban-ui/vite-plugun-css-modules-dts';
 import cssModulesDts from '@luban-ui/vite-plugun-css-modules-dts';
 import type { Options as EnvDtsPluginOptions } from '@luban-ui/vite-plugun-env-dts';
@@ -22,10 +23,10 @@ import sitemapPlugin from '@luban-ui/vite-plugun-sitemap';
 import { createClassNamehash } from '@/utils/createClassNameHash';
 
 // build targets
-const esTargets = ['es2015', 'chrome87', 'safari13', 'firefox78', 'edge88'];
+const esTargetsDefault = ['es2015', 'chrome87', 'safari13', 'firefox78', 'edge88'];
 
 // modern targets
-const babelTargets = [
+const modernTargetsDefault = [
   'defaults',
   'chrome >= 87',
   'safari >= 13',
@@ -34,7 +35,7 @@ const babelTargets = [
 ];
 
 // legacy targets
-const legacyTargets = [
+const legacyTargetsDefault = [
   'defaults',
   'chrome >= 87',
   'safari >= 13',
@@ -45,6 +46,10 @@ const legacyTargets = [
 
 export interface PluginOptions {
   root?: string;
+
+  esTargets?: string[];
+  modernTargets?: string[];
+  legacyTargets?: string[];
 
   vue?: {
     enable?: boolean;
@@ -116,6 +121,13 @@ function viteLubanVuePlugin(
   // root
   const root = opts.root ?? process.cwd();
 
+  // targets
+  const {
+    esTargets = esTargetsDefault,
+    modernTargets = modernTargetsDefault,
+    legacyTargets = legacyTargetsDefault
+  } = opts;
+
   const normalizePaths = <T extends string | string[]>(p: T): T => {
     if (Array.isArray(p)) {
       return p.map((v) => {
@@ -153,7 +165,8 @@ function viteLubanVuePlugin(
           __VUE_PROD_DEVTOOLS__: env['process.env.NODE_ENV'] === 'development',
           __VUE_I18N_LEGACY_API_: false,
           __VUE_I18N_FULL_INSTALL__: false,
-          __INTLIFY_PROD_DEVTOOLS__: false
+          __INTLIFY_PROD_DEVTOOLS__: false,
+          ...config.define
         },
         resolve: {
           alias: {
@@ -174,6 +187,15 @@ function viteLubanVuePlugin(
                 classCompress: true
               });
             }
+          },
+          postcss: {
+            plugins: [
+              autoprefixer({
+                overrideBrowserslist: [
+                  ...legacyTargetsDefault
+                ]
+              })
+            ]
           }
         },
         build: {
@@ -277,6 +299,7 @@ function viteLubanVuePlugin(
     plugins.push(
       svgLoader({
         defaultImport: 'url',
+        svgo: false,
         ...opts.svg?.options
       })
     );
@@ -320,7 +343,7 @@ function viteLubanVuePlugin(
       legacy({
         targets: legacyTargets,
         modernPolyfills: true,
-        modernTargets: babelTargets,
+        modernTargets,
         ...opts.legacy?.options
       })
     );
