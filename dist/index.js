@@ -535,7 +535,13 @@ function createClassNamehash(args) {
 }
 
 // src/index.ts
-var esTargetsDefault = ["es2015", "chrome87", "safari13", "firefox78", "edge88"];
+var esTargetsDefault = [
+  "es2015",
+  "chrome87",
+  "safari13",
+  "firefox78",
+  "edge88"
+];
 var modernTargetsDefault = [
   "defaults",
   "chrome >= 87",
@@ -580,6 +586,15 @@ function viteLubanVuePlugin(opts = {}) {
       const envDir = config.envDir ?? path2.resolve(confRoot, "./envs");
       const env2 = loadEnv(mode, envDir, envPrefix);
       const base = config.base || "/";
+      if (opts.verbose) {
+        console.log(
+          autoprefixer({
+            overrideBrowserslist: [
+              ...legacyTargetsDefault
+            ]
+          }).info()
+        );
+      }
       return {
         root: confRoot,
         base,

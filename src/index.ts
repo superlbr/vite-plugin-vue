@@ -51,6 +51,7 @@ const legacyTargetsDefault = [
 ];
 
 export interface PluginOptions {
+  verbose?: boolean;
   root?: string;
 
   esTargets?: string[];
@@ -161,6 +162,16 @@ function viteLubanVuePlugin(
 
       // base
       const base = config.base || '/';
+
+      if (opts.verbose) {
+        console.log(
+          autoprefixer({
+            overrideBrowserslist: [
+              ...legacyTargetsDefault
+            ]
+          }).info()
+        );
+      }
 
       return {
         root: confRoot,

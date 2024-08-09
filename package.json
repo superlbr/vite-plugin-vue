@@ -1,7 +1,7 @@
 {
   "name": "@luban-ui/vite-plugin-vue",
   "type": "module",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "homepage": "https://github.com/ccqgithub/vite-plugin-vue",
   "repository": "https://github.com/luban-dev/vite-plugin-vue",
   "exports": {

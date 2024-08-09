@@ -11,6 +11,7 @@ import { Options as Options$2 } from '@luban-ui/vite-plugun-env-dts';
 import { Options as Options$3 } from '@luban-ui/vite-plugun-sitemap';
 
 interface PluginOptions {
+    verbose?: boolean;
     root?: string;
     esTargets?: string[];
     modernTargets?: string[];
