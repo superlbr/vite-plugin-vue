@@ -1,7 +1,7 @@
 {
   "name": "@luban-ui/vite-plugin-vue",
   "type": "module",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "homepage": "https://github.com/ccqgithub/vite-plugin-vue",
   "repository": "https://github.com/luban-dev/vite-plugin-vue",
   "exports": {
@@ -41,6 +41,7 @@
     "@luban-ui/vite-plugun-env-dts": "^1.0.0",
     "@luban-ui/vite-plugun-sitemap": "^1.0.1",
     "@vitejs/plugin-basic-ssl": "^1.0.2",
+    "@vitejs/plugin-legacy": "^5.4.2",
     "@vitejs/plugin-vue": "^4.5.2",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
     "autoprefixer": "^10.4.20",
@@ -49,7 +50,6 @@
     "terser": "^5.26.0",
     "typed-css-modules": "^0.8.1",
     "vite-plugin-circular-dependency": "^0.2.1",
-    "vite-plugin-legacy-extends": "^5.2.0",
     "vite-plugin-mkcert": "^1.17.1",
     "vite-svg-loader": "^5.1.0"
   },

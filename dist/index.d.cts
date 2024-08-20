@@ -4,7 +4,7 @@ import { MkcertPluginOptions } from 'vite-plugin-mkcert';
 import vueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import circularDependency from 'vite-plugin-circular-dependency';
-import legacy from 'vite-plugin-legacy-extends';
+import legacy from '@vitejs/plugin-legacy';
 import svgLoader from 'vite-svg-loader';
 import { Options as Options$1 } from '@luban-ui/vite-plugun-css-modules-dts';
 import { Options as Options$2 } from '@luban-ui/vite-plugun-env-dts';

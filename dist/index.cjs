@@ -533,7 +533,7 @@ var import_vite_plugin_mkcert = __toESM(require("vite-plugin-mkcert"), 1);
 var import_vite2 = __toESM(require("@intlify/unplugin-vue-i18n/vite"), 1);
 var import_rollup_plugin_visualizer = require("rollup-plugin-visualizer");
 var import_vite_plugin_circular_dependency = __toESM(require("vite-plugin-circular-dependency"), 1);
-var import_vite_plugin_legacy_extends = __toESM(require("vite-plugin-legacy-extends"), 1);
+var import_plugin_legacy = __toESM(require("@vitejs/plugin-legacy"), 1);
 var import_vite_svg_loader = __toESM(require("vite-svg-loader"), 1);
 var import_autoprefixer = __toESM(require("autoprefixer"), 1);
 var import_vite_plugun_css_modules_dts = __toESM(require("@luban-ui/vite-plugun-css-modules-dts"), 1);
@@ -782,7 +782,7 @@ function viteLubanVuePlugin(opts = {}) {
     plugins.push((0, import_vite.splitVendorChunkPlugin)());
   if (opts.legacy?.enable !== false) {
     plugins.push(
-      (0, import_vite_plugin_legacy_extends.default)({
+      (0, import_plugin_legacy.default)({
         targets: legacyTargets,
         modernPolyfills: true,
         modernTargets,
