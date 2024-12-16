@@ -647,7 +647,7 @@ function viteLubanVuePlugin(opts = {}) {
           }
         },
         server: {
-          host: "0.0.0.0"
+          host: config.server?.host || "0.0.0.0"
         },
         css: {
           modules: {
